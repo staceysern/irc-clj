@@ -68,16 +68,18 @@
   (update-in server [:channels] assoc (:cname channel) channel))
 
 (defn add-user-to-channel [server uid cname]
-  (assoc-in (assoc-in server [:channels cname]
-                      (channel-add-user (channel-by-name server cname) uid))
-            [:users uid] (user-add-channel (user-by-uid server uid)
-                                           cname)))
+  (-> server
+      (assoc-in [:channels cname]
+                (channel-add-user (channel-by-name server cname) uid))
+      (assoc-in [:users uid]
+                (user-add-channel (user-by-uid server uid) cname))))
 
 (defn remove-user-from-channel [server uid cname]
-  (assoc-in (assoc-in server [:channels cname]
-                      (channel-remove-user (channel-by-name server cname) uid))
-            [:users uid] (user-remove-channel (user-by-uid server uid)
-                                              cname)))
+  (-> server
+      (assoc-in [:channels cname]
+                (channel-remove-user (channel-by-name server cname) uid))
+      (assoc-in [:users uid]
+                (user-remove-channel (user-by-uid server uid) cname))))
 
 (defn remove-user [server uid]
   (update-in (reduce #(remove-user-from-channel %1 uid %2)
