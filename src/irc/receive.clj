@@ -116,13 +116,11 @@
 (defmethod process-command :need-more-params
   [server uid command]
   (notify (user-by-uid server uid) server {:message :err-need-more-params
-                                           :command (:command command)})
-  server)
+                                           :command (:command command)}))
 
 (defmethod process-command :no-nickname-given
   [server uid command]
-  (notify (user-by-uid server uid) server {:message :err-no-nickname-given})
-  server)
+  (notify (user-by-uid server uid) server {:message :err-no-nickname-given}))
 
 (defmethod process-command :no-recipient
   [server uid command]
