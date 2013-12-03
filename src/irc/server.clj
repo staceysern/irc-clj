@@ -57,9 +57,9 @@
        (user-cnames (user-by-uid server uid))))
 
 (defn uids-on-channels-with [server uid]
-  (sequence (difference (reduce union (map (comp set channel-uids)
-                                           (channels-for-user server uid)))
-                        #{uid})))
+  (sequence (disj (reduce union (map (comp set channel-uids)
+                                     (channels-for-user server uid)))
+                  uid)))
 
 (defn add-user [server user]
   (update-in server [:users] assoc (:uid user) user))
