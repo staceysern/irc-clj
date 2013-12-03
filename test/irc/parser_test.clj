@@ -118,16 +118,16 @@
 (facts "gen-parse-map"
   (gen-parse-map [[:PREFIX "prefix"] [:COMMAND "command"]
                   [:PARAMS "arg1" "arg2"]])
-  => {:prefix "prefix" :command "command" :params ["arg1" "arg2"]}
+  => {:prefix "prefix" :command :command :params ["arg1" "arg2"]}
 
   (gen-parse-map [[:PREFIX "prefix"] [:COMMAND "command"]])
-  => {:prefix "prefix" :command "command"}
+  => {:prefix "prefix" :command :command :params []}
 
   (gen-parse-map [[:COMMAND "command"] [:PARAMS "arg1" "arg2"]])
-  => {:command "command" :params ["arg1" "arg2"]}
+  => {:command :command :params ["arg1" "arg2"]}
 
   (gen-parse-map [[:COMMAND "command"]])
-  => {:command "command"}
+  => {:command :command :params []}
   )
 
 (facts "parse"
@@ -144,134 +144,142 @@
   )
 
 (facts "make-command pass"
-  (make-command {:command "pass"}) => {:command :pass}
+  (make-command {:command :pass}) => {:command :pass}
 
-  (make-command {:command "pass" :params ["password"]})
+  (make-command {:command :pass :params ["password"]})
   => {:command :pass :password "password"}
 
-  (make-command {:command "pass" :params ["password" "extra"]})
+  (make-command {:command :pass :params ["password" "extra"]})
   => {:command :pass :password "password"}
   )
 
 (facts "make-command nick"
-  (make-command {:command "nick"})
+  (make-command {:command :nick :params []})
   => {:command :nick :invalid :no-nickname-given}
 
-  (make-command {:command "nick" :params ["nickname"]})
+  (make-command {:command :nick :params ["nickname"]})
   => {:command :nick :nick "nickname"}
 
-  (make-command {:command "nick" :params ["nickname" "extra"]})
+  (make-command {:command :nick :params ["nickname" "extra"]})
   => {:command :nick :nick "nickname"}
 
   )
 
 (facts "make-command user"
-  (make-command {:command "user"}) => {:command :user :invalid :need-more-params}
-
-  (make-command {:command "user" :params ["user"]})
+  (make-command {:command :user :params []})
   => {:command :user :invalid :need-more-params}
 
-  (make-command {:command "user" :params ["user" "mode"]})
+  (make-command {:command :user :params ["user"]})
   => {:command :user :invalid :need-more-params}
 
-  (make-command {:command "user" :params ["user" "mode" "unused"]})
+  (make-command {:command :user :params ["user" "mode"]})
   => {:command :user :invalid :need-more-params}
 
-  (make-command {:command "user" :params ["user" "mode" "unused" "realname"]})
+  (make-command {:command :user :params ["user" "mode" "unused"]})
+  => {:command :user :invalid :need-more-params}
+
+  (make-command {:command :user :params ["user" "mode" "unused" "realname"]})
   => {:command :user :user "user" :mode "mode" :realname "realname"}
 
-  (make-command {:command "user"
-                 :params ["user" "mode" "unused" "realname" "extra"]})
+  (make-command {:command :user :params
+                 ["user" "mode" "unused" "realname" "extra"]})
   => {:command :user :user "user" :mode "mode" :realname "realname"}
   )
 
 (facts "make-command quit"
-  (make-command {:command "quit"}) => {:command :quit}
+  (make-command {:command :quit :params []}) => {:command :quit}
 
-  (make-command {:command "quit" :params ["extra"]}) => {:command :quit}
+  (make-command {:command :quit :params ["extra"]}) => {:command :quit}
   )
 
 (facts "make-command join"
-  (make-command {:command "join"}) => {:command :join :invalid :need-more-params}
+  (make-command {:command :join :params []})
+  => {:command :join :invalid :need-more-params}
 
-  (make-command {:command "join" :params ["channel"]})
+  (make-command {:command :join :params ["channel"]})
   => {:command :join :chan "channel"}
 
-  (make-command {:command "join" :params ["0"]})
+  (make-command {:command :join :params ["0"]})
   => {:command :join :chan "0"}
 
-  (make-command {:command "join" :params ["channel" "extra"]})
+  (make-command {:command :join :params ["channel" "extra"]})
   => {:command :join :chan "channel"}
   )
 
 (facts "make-command part"
-  (make-command {:command "part"}) => {:command :part :invalid :need-more-params}
+  (make-command {:command :part :params []})
+  => {:command :part :invalid :need-more-params}
 
-  (make-command {:command "part" :params ["channel"]})
+  (make-command {:command :part :params ["channel"]})
   => {:command :part :chan "channel"}
 
-  (make-command {:command "part" :params ["channel" "extra"]})
+  (make-command {:command :part :params ["channel" "extra"]})
   => {:command :part :chan "channel"}
   )
 
 (facts "make-command topic"
-  (make-command {:command "topic"})
+  (make-command {:command :topic :params []})
   => {:command :topic :invalid :need-more-params}
 
-  (make-command {:command "topic" :params ["channel"]})
+  (make-command {:command :topic :params ["channel"]})
   => {:command :topic :chan "channel"}
 
-  (make-command {:command "topic" :params ["channel" "topic"]})
+  (make-command {:command :topic :params ["channel" "topic"]})
   => {:command :topic :chan "channel" :topic "topic"}
 
-  (make-command {:command "topic" :params ["channel" "topic" "extra"]})
+  (make-command {:command :topic :params ["channel" "topic" "extra"]})
   => {:command :topic :chan "channel" :topic "topic"}
   )
 
 (facts "make-command names"
-  (make-command {:command "names"}) => {:command :names}
+  (make-command {:command :names :params []})
+  => {:command :names}
 
-  (make-command {:command "names" :params ["channel"]})
+  (make-command {:command :names :params ["channel"]})
   => {:command :names :chan "channel"}
 
-  (make-command {:command "names" :params ["channel" "extra"]})
+  (make-command {:command :names :params ["channel" "extra"]})
   => {:command :names :chan "channel"}
   )
 
 (facts "make-command list"
-  (make-command {:command "list"}) => {:command :list}
+  (make-command {:command :list :params []})
+  => {:command :list}
 
-  (make-command {:command "list" :params ["channel"]})
+  (make-command {:command :list :params ["channel"]})
   => {:command :list :chan "channel"}
 
-  (make-command {:command "list" :params ["channel" "extra"]})
+  (make-command {:command :list :params ["channel" "extra"]})
   => {:command :list :chan "channel"}
   )
 
 (facts "make-command kick"
-  (make-command {:command "kick"}) => {:command :kick :invalid :need-more-params}
-
-  (make-command {:command "kick" :params ["channel"]})
+  (make-command {:command :kick :params []})
   => {:command :kick :invalid :need-more-params}
 
-  (make-command {:command "kick" :params ["channel" "user"]})
+  (make-command {:command :kick :params ["channel"]})
+  => {:command :kick :invalid :need-more-params}
+
+  (make-command {:command :kick :params ["channel" "user"]})
   => {:command :kick :chan "channel" :user "user"}
   )
 
 (facts "make-command privmsg"
-  (make-command {:command "privmsg"})
+  (make-command {:command :privmsg :params []})
+
   => {:command :privmsg :invalid :no-recipient}
 
-  (make-command {:command "privmsg" :params ["target"]})
+  (make-command {:command :privmsg :params ["target"]})
   => {:command :privmsg :invalid :no-text}
 
-  (make-command {:command "privmsg" :params ["target" "text"]})
+  (make-command {:command :privmsg :params ["target" "text"]})
   => {:command :privmsg :target "target" :text "text"}
   )
 
 (facts "make-command ison"
-  (make-command {:command "ison"}) => {:command :ison :invalid :need-more-params}
+  (make-command {:command :ison :params []})
+  => {:command :ison :invalid :need-more-params}
 
-  (make-command {:command "ison" :params ["nickname"]})
+  (make-command {:command :ison :params ["nickname"]})
   => {:command :ison :nick "nickname"}
   )

@@ -21,123 +21,102 @@
   [tree]
   (if (insta/failure? tree)
     {:command :invalid}
-    (match [(vec tree)]
-      [[[:PREFIX prefix] [:COMMAND command] [:PARAMS & params]]]
-      {:prefix prefix :command command :params params}
+    (let [parse-map
+          (match [(vec tree)]
+            [[[:PREFIX prefix] [:COMMAND command] [:PARAMS & params]]]
+            {:prefix prefix :command command :params params}
 
-      [[[:PREFIX prefix] [:COMMAND command]]]
-      {:prefix prefix :command command}
+            [[[:PREFIX prefix] [:COMMAND command]]]
+            {:prefix prefix :command command :params []}
 
-      [[[:COMMAND command] [:PARAMS & params]]]
-      {:command command :params params}
+            [[[:COMMAND command] [:PARAMS & params]]]
+            {:command command :params params}
 
-      [[[:COMMAND command]]]
-      {:command command})))
+            [[[:COMMAND command]]]
+            {:command command :params []})]
+      (update-in parse-map [:command] keyword))))
 
 (defmulti make-command
   (fn [parse-map] (:command parse-map)))
 
-(defmethod make-command :invalid
-  [parse-map]
-  {:command :invalid
-   :invalid :unknown-command})
+(defmacro defcommand
+  "Defines a make-command method for the given command.
 
-(defmethod make-command "pass"
-  [parse-map]
-  (let [params (:params parse-map)
-        command {:command :pass}]
-    (if params
-      (assoc command :password (first params))
-      command)))
+  The body of a defcommand is similar to that of a match.
+  The match condition are matched against the parse-map params,
+  and the consequence is expected to return a hash map that
+  will be merged with {:command command}.
 
-(defmethod make-command "nick"
-  [parse-map]
-  (let [params (:params parse-map)
-        command {:command :nick}]
-    (if params
-      (assoc command :nick (first params))
-      (assoc command :invalid :no-nickname-given))))
+  The following are equivalent:
 
-(defmethod make-command "user"
-  [parse-map]
-  (let [params (:params parse-map)
-        command {:command :user}]
-    (if (and params (>= (count params) 4))
-      (assoc command :user (nth params 0)
-             :mode (nth params 1)
-             :realname (nth params 3))
-      (assoc command :invalid :need-more-params))))
+      (defcommand :foo
+        [a b] {:a a :b b}
+        [a]   {:a a})
 
-(defmethod make-command "quit"
-  [parse-map]
-  {:command :quit})
+      (defmethod make-command :foo
+        [{:keys [params]}]
+        (let [result (match params
+                       [a b] {:a a :b b}
+                       [a]   {:a a}
+                       :else {})]
+          (assoc result :command :foo)))
 
-(defmethod make-command "join"
-  [parse-map]
-  (let [params (:params parse-map)
-        command {:command :join}]
-    (if params
-      (assoc command :chan (first params))
-      (assoc command :invalid :need-more-params))))
+  Note the implicit :else clause."
+  [command & clauses]
+  `(defmethod make-command ~command
+     [{params# :params}]
+     (let [result# (match params#
+                     ~@clauses
+                     :else {})]
+       (assoc result# :command ~command))))
 
-(defmethod make-command "part"
-  [parse-map]
-  (let [params (:params parse-map)
-        command {:command :part}]
-    (if params
-      (assoc command :chan (first params))
-      (assoc command :invalid :need-more-params))))
+(defcommand :invalid
+  _ {:invalid :unknown-command})
 
-(defmethod make-command "topic"
-  [parse-map]
-  (let [params (:params parse-map)
-        command {:command :topic}]
-    (if params
-      (if (= (count params) 1)
-        (assoc command :chan (first params))
-        (assoc command :chan (first params)
-               :topic (nth params 1)))
-      (assoc command :invalid :need-more-params))))
+(defcommand :pass
+  [password & _] {:password password})
 
-(defmethod make-command "names"
-  [parse-map]
-  (let [params (:params parse-map)
-        command {:command :names}]
-    (if params
-      (assoc command :chan (first params))
-      command)))
+(defcommand :nick
+  [nick & _] {:nick nick}
+  [] {:invalid :no-nickname-given})
 
-(defmethod make-command "list"
-  [parse-map]
-  (let [params (:params parse-map)
-        command {:command :list}]
-    (if params
-      (assoc command :chan (first params))
-      command)))
+(defcommand :user
+  [user mode _ realname & _] {:user user :mode mode :realname realname}
+  [& _] {:invalid :need-more-params})
 
-(defmethod make-command "kick"
-  [parse-map]
-  (let [params (:params parse-map)
-        command {:command :kick}]
-    (if (or (not params) (< (count params) 2))
-      (assoc command :invalid :need-more-params)
-      (assoc command :chan (first params) :user (nth params 1)))))
+(defcommand :quit)
 
-(defmethod make-command "privmsg"
-  [parse-map]
-  (let [params (:params parse-map)
-        command {:command :privmsg}]
-    (cond (not params) (assoc command :invalid :no-recipient)
-          (= (count params) 1) (assoc command :invalid :no-text)
-          :else (assoc command :target (first params) :text (nth params 1)))))
+(defcommand :join
+  [chan & _] {:chan chan}
+  [] {:invalid :need-more-params})
 
-(defmethod make-command "ison"
-  [parse-map]
-  (let [params (:params parse-map)
-        command {:command :ison}]
-    (if params
-      (assoc command :nick (first params))
-      (assoc command :invalid :need-more-params))))
+(defcommand :part
+  [chan & _] {:chan chan}
+  [] {:invalid :need-more-params})
+
+(defcommand :topic
+  [chan topic & _] {:chan chan :topic topic}
+  [chan] {:chan chan}
+  [] {:invalid :need-more-params})
+
+(defcommand :names
+  [chan & _] {:chan chan})
+
+(defcommand :list
+  [chan & _] {:chan chan})
+
+(defcommand :kick
+  [chan user & _] {:chan chan :user user}
+  [& _] {:invalid :need-more-params})
+
+(defcommand :privmsg
+  [target text & _] {:target target :text text}
+  [target] {:invalid :no-text}
+  [] {:invalid :no-recipient})
+
+(defcommand :ison
+  [nick & _] {:nick nick}
+  [] {:invalid :need-more-params})
 
 (defn parse [s]
   (make-command (gen-parse-map (gen-parse-list s))))
