@@ -98,4 +98,3 @@
     (print-user u))
   (doseq [c (channels server)]
     (print-channel c)))
-

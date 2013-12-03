@@ -8,36 +8,36 @@
             [clojure.core.async :as async :refer [>!! <!!]]
             [clojure.string :refer [join]]))
 
-(def numeric {:rpl-welcome  "001"
-              :rpl-yourhost  "002"
-              :rpl-created  "003"
-              :rpl-myinfo  "004"
-              :rpl-no-topic  "331"
-              :rpl-name-reply  "353"
-              :rpl-end-of-names  "366"
-              :err-no-such-nick  "401"
-              :err-no-such-channel  "403"
-              :err-cannot-send-to-channel  "404"
-              :err-no-recipient  "411"
-              :err-no-text-to-send  "412"
-              :err-unknown-command  "421"
-              :err-no-nickname-given  "431"
-              :err-erroneous-nickname  "432"
-              :err-nickname-in-use  "433"
-              :err-not-on-channel  "442"
-              :err-not-registered  "451"
-              :err-need-more-params  "461"
-              :err-already-registered  "462"
-              })
+(def numeric
+  {:rpl-welcome  "001"
+   :rpl-yourhost  "002"
+   :rpl-created  "003"
+   :rpl-myinfo  "004"
+   :rpl-no-topic  "331"
+   :rpl-name-reply  "353"
+   :rpl-end-of-names  "366"
+   :err-no-such-nick  "401"
+   :err-no-such-channel  "403"
+   :err-cannot-send-to-channel  "404"
+   :err-no-recipient  "411"
+   :err-no-text-to-send  "412"
+   :err-unknown-command  "421"
+   :err-no-nickname-given  "431"
+   :err-erroneous-nickname  "432"
+   :err-nickname-in-use  "433"
+   :err-not-on-channel  "442"
+   :err-not-registered  "451"
+   :err-need-more-params  "461"
+   :err-already-registered  "462"})
 
-(def command {:join  "JOIN"
-              :nick  "NICK"
-              :part  "PART"
-              :pass  "PASS"
-              :privmsg  "PRIVMSG"
-              :quit  "QUIT"
-              :user  "USER"
-              })
+(def command
+  {:join  "JOIN"
+   :nick  "NICK"
+   :part  "PART"
+   :pass  "PASS"
+   :privmsg  "PRIVMSG"
+   :quit  "QUIT"
+   :user  "USER"})
 
 (defn nick-string [user]
   (if-let [nick (user-nick user)]
@@ -51,7 +51,7 @@
 (defn format-command-response [server source message message-text]
   (str ":" source " " (message command) " " message-text))
 
-(defmulti construct-message 
+(defmulti construct-message
   (fn  [server user message]
     (:message message)))
 
@@ -87,7 +87,7 @@
                   (str "= " (:chan message) " :"
                        (join " " (map user-nick
                                       (users-on-channel server
-                                                        (:chan message)))))))    
+                                                        (:chan message)))))))
 
 (defmethod construct-message :rpl-end-of-names
   [server user message]

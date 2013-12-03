@@ -39,186 +39,182 @@
   (drain-ios! [io1 io2 io3 io4]))
 
 (facts "construct-message :rpl-welcome"
-       (construct-message server user1 {:message :rpl-welcome}) =>
-       ":localhost 001 user1 :Welcome to the IRC Chat Server user1"
-       )
+  (construct-message server user1 {:message :rpl-welcome})
+  => ":localhost 001 user1 :Welcome to the IRC Chat Server user1"
+  )
 
 (facts "construct-message :rpl-yourhost"
-       (construct-message server user1 {:message :rpl-yourhost}) =>
-       (str ":localhost 002 user1 :Your host is localhost, "
-            "running version irc-sds.0.1")
-       )
+  (construct-message server user1 {:message :rpl-yourhost})
+  => (str ":localhost 002 user1 :Your host is localhost, "
+          "running version irc-sds.0.1")
+  )
 
 (facts "construct-message :rpl-created"
-       (construct-message server user1 {:message :rpl-created}) =>
-       (str ":localhost 003 user1 :This server was created "
-            "Thu Oct 24 2013 at 7:23:58 EST")
-       )
+  (construct-message server user1 {:message :rpl-created})
+  => (str ":localhost 003 user1 :This server was created "
+          "Thu Oct 24 2013 at 7:23:58 EST")
+  )
 
 (facts "construct-message :rpl-myinfo"
-       (construct-message server user1 {:message :rpl-myinfo}) =>
-       ":localhost 004 user1 localhost irc-sds.0.1"
-       )
+  (construct-message server user1 {:message :rpl-myinfo})
+  => ":localhost 004 user1 localhost irc-sds.0.1"
+  )
 
 (facts "construct-message :rpl-no-topic"
-       (construct-message server user1
-                          {:message :rpl-no-topic :chan "&chan1"}) =>
-       ":localhost 331 user1 &chan1 :No topic is set"
-       )
+  (construct-message server user1
+                     {:message :rpl-no-topic :chan "&chan1"})
+  => ":localhost 331 user1 &chan1 :No topic is set"
+  )
 
 (facts "construct-message :rpl-name-reply"
-       (construct-message server user1
-                          {:message :rpl-name-reply :chan "&chan1"}) =>
-       ":localhost 353 user1 = &chan1 :user1"
+  (construct-message server user1
+                     {:message :rpl-name-reply :chan "&chan1"})
+  => ":localhost 353 user1 = &chan1 :user1"
 
-       (construct-message server user1
-                          {:message :rpl-name-reply :chan "&chan4"}) =>
-       ":localhost 353 user1 = &chan4 :user1 user2 user3 user4"
-       )
+  (construct-message server user1
+                     {:message :rpl-name-reply :chan "&chan4"})
+  => ":localhost 353 user1 = &chan4 :user1 user2 user3 user4"
+  )
 
 (facts "construct-message :rpl-end-of-names"
-       (construct-message server user1
-                          {:message :rpl-end-of-names :chan "&chan1"}) =>
-       ":localhost 366 user1 &chan1 :End of NAMES list")
+  (construct-message server user1
+                     {:message :rpl-end-of-names :chan "&chan1"})
+  => ":localhost 366 user1 &chan1 :End of NAMES list")
 
 (facts "construct-message :err-no-such-nick"
-       (construct-message server user1
-                          {:message :err-no-such-nick :nick "user0"}) =>
-       ":localhost 401 user1 user0 :No such nick/channel"
-       )
+  (construct-message server user1
+                     {:message :err-no-such-nick :nick "user0"})
+  => ":localhost 401 user1 user0 :No such nick/channel"
+  )
 
 (facts "construct-message :err-no-such-channel"
-       (construct-message server user1
-                          {:message :err-no-such-channel :chan "#chan0"}) =>
-       ":localhost 403 user1 #chan0 :No such channel"
-       )
+  (construct-message server user1
+                     {:message :err-no-such-channel :chan "#chan0"})
+  => ":localhost 403 user1 #chan0 :No such channel"
+  )
 
 (facts "construct-message :err-no-recipient"
-       (construct-message server user1
-                          {:message :err-no-recipient :command :privmsg}) =>
-       ":localhost 411 user1 :No recipient given (PRIVMSG)"
-       )
+  (construct-message server user1
+                     {:message :err-no-recipient :command :privmsg})
+  => ":localhost 411 user1 :No recipient given (PRIVMSG)"
+  )
 
 (facts "construct-message :err-no-text-to-send"
-       (construct-message server user1
-                          {:message :err-no-text-to-send}) =>
-       ":localhost 412 user1 :No text to send"
-       )
+  (construct-message server user1
+                     {:message :err-no-text-to-send})
+  => ":localhost 412 user1 :No text to send"
+  )
 
 (facts "construct-message :err-unknown-command"
-       (construct-message server user1
-                          {:message :err-unknown-command :command "cmd1234"}) =>
-       ":localhost 421 user1 cmd1234 :Unknown command"
-       )
+  (construct-message server user1
+                     {:message :err-unknown-command :command "cmd1234"})
+  => ":localhost 421 user1 cmd1234 :Unknown command"
+  )
 
 (facts "construct-message :err-no-nickname-given"
-       (construct-message server user1
-                          {:message :err-no-nickname-given}) =>
-       ":localhost 431 user1 :No nickname given"
-       )
+  (construct-message server user1
+                     {:message :err-no-nickname-given})
+  => ":localhost 431 user1 :No nickname given"
+  )
 
 (facts "construct-message :err-erroneous-nickname"
-       (construct-message server user1
-                          {:message :err-erroneous-nickname :nick "1234"}) =>
-       ":localhost 432 user1 1234 :Erroneous nickname"
-       )
+  (construct-message server user1
+                     {:message :err-erroneous-nickname :nick "1234"})
+  => ":localhost 432 user1 1234 :Erroneous nickname"
+  )
 
 (facts "construct-message :err-nickname-in-use"
-       (construct-message server user1
-                          {:message :err-nickname-in-use :nick "user2"}) =>
-       ":localhost 433 user1 user2 :Nickname is already in use"
-       )
+  (construct-message server user1
+                     {:message :err-nickname-in-use :nick "user2"})
+  => ":localhost 433 user1 user2 :Nickname is already in use"
+  )
 
 (facts "construct-message :err-not-on-channel"
-       (construct-message server user1
-                          {:message :err-not-on-channel :chan "&chan"}) =>
-       ":localhost 442 user1 &chan :You're not on that channel"
-       )
+  (construct-message server user1
+                     {:message :err-not-on-channel :chan "&chan"})
+  => ":localhost 442 user1 &chan :You're not on that channel"
+  )
 
 (facts "construct-message :err-not-registered"
-       (construct-message server user1 {:message :err-not-registered}) =>
-       ":localhost 451 user1 :You have not registered"
-       )
+  (construct-message server user1 {:message :err-not-registered})
+  => ":localhost 451 user1 :You have not registered"
+  )
 
 (facts "construct-message :err-need-more-params"
-       (construct-message server user1
-                          {:message :err-need-more-params :command :join}) =>
-       ":localhost 461 user1 JOIN :Not enough parameters"
+  (construct-message server user1
+                     {:message :err-need-more-params :command :join})
+  => ":localhost 461 user1 JOIN :Not enough parameters"
 
-       (construct-message server user1
-                          {:message :err-need-more-params :command :user}) =>
-       ":localhost 461 user1 USER :Not enough parameters"
+  (construct-message server user1
+                     {:message :err-need-more-params :command :user})
+  => ":localhost 461 user1 USER :Not enough parameters"
 
-       (construct-message server user1
-                          {:message :err-need-more-params :command :part}) =>
-       ":localhost 461 user1 PART :Not enough parameters"
-       )
+  (construct-message server user1
+                     {:message :err-need-more-params :command :part})
+  => ":localhost 461 user1 PART :Not enough parameters"
+  )
 
 (facts "construct-message :err-already-registered"
-       (construct-message server user1 {:message :err-already-registered}) =>
-       ":localhost 462 user1 :You may not reregister"
-       )
+  (construct-message server user1 {:message :err-already-registered})
+  => ":localhost 462 user1 :You may not reregister"
+  )
 
 (facts "construct-message :nick"
-       (construct-message server user1 {:message :nick :source "user3"
-                                        :nick "user99"}) =>
-       ":user3 NICK user99"
-       )
+  (construct-message server user1
+                     {:message :nick :source "user3" :nick "user99"})
+  => ":user3 NICK user99"
+  )
 
 (facts "construct-message :join"
-       (construct-message server user1 {:message :join :source "user3"
-                                        :chan "#chan3"}) =>
-       ":user3 JOIN #chan3"
-       )
+  (construct-message server user1
+                     {:message :join :source "user3" :chan "#chan3"})
+  => ":user3 JOIN #chan3"
+  )
 
 (facts "construct-message :part"
-       (construct-message server user1 {:message :part :source "user3"
-                                        :chan "#chan3"}) =>
-       ":user3 PART #chan3"
-       )
+  (construct-message server user1
+                     {:message :part :source "user3" :chan "#chan3"})
+  => ":user3 PART #chan3"
+  )
 
 (facts "construct-message :privmsg"
-       (construct-message server user1 {:message :privmsg :source "user3"
-                                        :target "#chan3" :text "hello world"}) =>
-       ":user3 PRIVMSG #chan3 :hello world"
+  (construct-message server user1 {:message :privmsg :source "user3"
+                                   :target "#chan3" :text "hello world"})
+  => ":user3 PRIVMSG #chan3 :hello world"
 
-       (construct-message server user1 {:message :privmsg :source "user3"
-                                        :target "user1" :text "hello world"}) =>
-       ":user3 PRIVMSG user1 :hello world"
-       )
+  (construct-message server user1 {:message :privmsg :source "user3"
+                                   :target "user1" :text "hello world"})
+  => ":user3 PRIVMSG user1 :hello world"
+  )
 
 (facts "construct-message :quit"
-       (construct-message server user1 {:message :quit :source "user3"
-                                        :text "Client Quit"}) =>
-       ":user3 QUIT :Client Quit"
-       )
+  (construct-message server user1
+                     {:message :quit :source "user3" :text "Client Quit"})
+  => ":user3 QUIT :Client Quit"
+  )
 
 (facts "notify"
-       (drain-all!)
-       (notify user1 server {:message :err-not-registered}) =>
-       (validate-state server
-                       (merge {user1 [(str ":localhost 451 user1 :You have "
-                                          "not registered")]}
-                              (no-messages [user2 user3 user4])))
-       
-       (drain-all!)
-       (notify chan3 server {:message :nick :source "user1" :nick "user99"}) =>
-       (validate-state server
-                       {user1 [":user1 NICK user99"]
-                        user2 [":user1 NICK user99"]
-                        user3 [":user1 NICK user99"]
-                        user4 []})
+  (drain-all!)
+  (notify user1 server {:message :err-not-registered})
+  => (validate-state server
+                     (merge {user1 [(str ":localhost 451 user1 :You have "
+                                         "not registered")]}
+                            (no-messages [user2 user3 user4])))
 
-       (drain-all!)
-       (notify chan3 server {:message :privmsg :source "user1"
-                             :text "hello world" :target "#chan3"}) =>
-       (validate-state server
-                       {user1 []
-                        user2 [":user1 PRIVMSG #chan3 :hello world"]
-                        user3 [":user1 PRIVMSG #chan3 :hello world"]
-                        user4 []})
-       )
+  (drain-all!)
+  (notify chan3 server {:message :nick :source "user1" :nick "user99"})
+  => (validate-state server
+                     {user1 [":user1 NICK user99"]
+                      user2 [":user1 NICK user99"]
+                      user3 [":user1 NICK user99"]
+                      user4 []})
 
-
-
-
+  (drain-all!)
+  (notify chan3 server {:message :privmsg :source "user1"
+                        :text "hello world" :target "#chan3"})
+  => (validate-state server
+                     {user1 []
+                      user2 [":user1 PRIVMSG #chan3 :hello world"]
+                      user3 [":user1 PRIVMSG #chan3 :hello world"]
+                      user4 []})
+  )

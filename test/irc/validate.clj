@@ -49,5 +49,5 @@
       (pprint expected-server)
       (println "Actual server:")
       (pprint actual-server))
-    (and (= expected-server actual-server) 
+    (and (= expected-server actual-server)
          (received-messages? actual-server messages))))

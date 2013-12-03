@@ -21,7 +21,7 @@
 (defn welcome [server uid]
   (let [user (user-by-uid server uid)]
     (notify user server {:message :rpl-welcome})
-    (notify user server {:message :rpl-yourhost}) 
+    (notify user server {:message :rpl-yourhost})
     (notify user server {:message :rpl-created})
     (notify user server {:message :rpl-myinfo})))
 
@@ -74,7 +74,6 @@
                     (notify user server {:message :err-no-such-channel
                                          :chan cname}))]
     (cond error server
-
           ;; ignore a user's attempt to a join a channel of which they
           ;; are already a part
           (on-channel? server uid cname)
@@ -84,7 +83,7 @@
           (not (some #{cname} (channel-names server)))
           (add-to-channel-and-notify (add-channel server (make-channel cname))
                                      uid cname)
-          
+
           :else
           (add-to-channel-and-notify server uid cname))))
 
@@ -188,7 +187,7 @@
         error (cond (not (user-registered? user))
                     (notify user server {:message :err-not-registered}))]
     (cond error server
-          
+
           (= (:chan command) "0")
           (leave-channels server uid)
 
@@ -203,7 +202,7 @@
                     (not (some #{(:chan command)} (channel-names server)))
                     (notify user server {:message :err-no-such-channel
                                          :chan (:chan command)})
-                    
+
                     (not (on-channel? server uid (:chan command)))
                     (notify user server {:message :err-not-on-channel
                                          :chan (:chan command)}))]

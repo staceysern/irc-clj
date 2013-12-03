@@ -13,17 +13,16 @@
    {:NICKNAME str
     :COMMAND (comp (partial vector :COMMAND) lower-case str)
     :MIDDLE str
-    :TRAILING str
-    } (gen-parse-tree s)))
+    :TRAILING str}
+   (gen-parse-tree s)))
 
 (defn gen-parse-map
-  ;; Generate a map representation of the parse tree
+  "Generate a map representation of the parse tree"
   [tree]
-
   (if (insta/failure? tree)
     {:command :invalid}
     (match [(vec tree)]
-      [[[:PREFIX prefix] [:COMMAND command] [:PARAMS & params]]] 
+      [[[:PREFIX prefix] [:COMMAND command] [:PARAMS & params]]]
       {:prefix prefix :command command :params params}
 
       [[[:PREFIX prefix] [:COMMAND command]]]

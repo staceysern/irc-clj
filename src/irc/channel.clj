@@ -23,4 +23,3 @@
 (defn print-channel [channel]
   (println "channel: " (channel-cname channel))
   (println "   uids: " (channel-uids channel)))
-
