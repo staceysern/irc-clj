@@ -199,7 +199,7 @@
 (defn send-message [server user message]
   (let [string (construct-message server user message)]
     (log (format " %2d tx: %s" (user-uid user) string))
-    (>!! (user-io user) string)
+    (async/put! (user-io user) string)
     string))
 
 (defprotocol IMessage
