@@ -68,9 +68,9 @@
 
 (defn join-channel [server uid cname]
   (let [user (user-by-uid server uid)
-        error (cond (not (valid-chan? cname))
-                    (notify user server {:message :err-no-such-channel
-                                         :chan cname}))]
+        error (when (not (valid-chan? cname))
+                (notify user server {:message :err-no-such-channel
+                                     :chan cname}))]
     (cond error server
           ;; ignore a user's attempt to a join a channel of which they
           ;; are already a part
