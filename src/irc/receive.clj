@@ -137,31 +137,28 @@
 
 (defmethod process-command :pass
   [server uid command]
-  (let [user (user-by-uid server uid)]
-    (cond (user-registered? user)
-          (notify user server
-                  {:message :err-already-registered})
+  (let [user (user-by-uid server uid)
+        error (cond (user-registered? user)
+                    {:message :err-already-registered}
 
-          (not (:password command))
-          (notify user server
-                  {:message :err-need-more-params
-                   :command (:command command)}))
-    server))
+                    (not (:password command))
+                    {:message :err-need-more-params
+                     :command (:command command)})]
+    (if error
+      (notify user server error)
+      server)))
 
 (defmethod process-command :nick
   [server uid command]
   (let [user (user-by-uid server uid)
         nick (subs (:nick command) 0 (min (count (:nick command)) max-nick-len))
         error (cond (not (valid-nick? nick))
-                    (notify user server
-                            {:message :err-erroneous-nickname
-                             :nick nick})
+                    {:message :err-erroneous-nickname :nick nick}
 
                     (user-by-nick server nick)
-                    (notify user server
-                            {:message :err-nickname-in-use
-                             :nick nick}))]
-    (cond error server
+                    {:message :err-nickname-in-use :nick nick})]
+    (cond error
+          (notify user server error)
 
           (not (user-registered? user))
           (set-nick server uid nick)
@@ -171,18 +168,19 @@
 (defmethod process-command :user
   [server uid command]
   (let [user (user-by-uid server uid)
-        error (cond (user-registered? user)
-                    (notify user server {:message :err-already-registered}))]
+        error (when (user-registered? user)
+                {:message :err-already-registered})]
     (if error
-      server
+      (notify user server error)
       (set-realname server uid (:realname command)))))
 
 (defmethod process-command :join
   [server uid command]
   (let [user (user-by-uid server uid)
-        error (cond (not (user-registered? user))
-                    (notify user server {:message :err-not-registered}))]
-    (cond error server
+        error (when-not (user-registered? user)
+                {:message :err-not-registered})]
+    (cond error
+          (notify user server error)
 
           (= (:chan command) "0")
           (leave-channels server uid)
@@ -193,17 +191,15 @@
   [server uid command]
   (let [user (user-by-uid server uid)
         error (cond (not (user-registered? user))
-                    (notify user server {:message :err-not-registered})
+                    {:message :err-not-registered}
 
                     (not (some #{(:chan command)} (channel-names server)))
-                    (notify user server {:message :err-no-such-channel
-                                         :chan (:chan command)})
+                    {:message :err-no-such-channel :chan (:chan command)}
 
                     (not (on-channel? server uid (:chan command)))
-                    (notify user server {:message :err-not-on-channel
-                                         :chan (:chan command)}))]
+                    {:message :err-not-on-channel :chan (:chan command)})]
     (if error
-      server
+      (notify user server error)
       (leave-channel server uid (:chan command)))))
 
 (defmethod process-command :privmsg
@@ -211,18 +207,17 @@
   (let [user (user-by-uid server uid)
         target (get-target server (:target command))
         error (cond (not (user-registered? user))
-                    (notify user server {:message :err-not-registered})
+                    {:message :err-not-registered}
 
                     (nil? target)
-                    (notify user server {:message :err-no-such-nick
-                                         :nick (:target command)})
+                    {:message :err-no-such-nick :nick (:target command)}
 
                     (and (channel? (get-target server (:target command)))
                          (not (on-channel? server uid (:target command))))
-                    (notify user server {:message :err-cannot-send-to-channel
-                                         :chan (:target command)}))]
+                    {:message :err-cannot-send-to-channel
+                     :chan (:target command)})]
     (if error
-      server
+      (notify user server error)
       (notify target server {:message :privmsg
                              :text (:text command)
                              :source (user-nick user)
