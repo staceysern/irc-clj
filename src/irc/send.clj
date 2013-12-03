@@ -40,9 +40,7 @@
    :user  "USER"})
 
 (defn nick-string [user]
-  (if-let [nick (user-nick user)]
-    nick
-    "*"))
+  (or (user-nick user) "*"))
 
 (defn format-numeric [server user message message-text]
   (str ":" (server-host server) " " (message numeric) " " (nick-string user) " "
