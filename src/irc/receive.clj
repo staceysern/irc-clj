@@ -50,7 +50,7 @@
       server')))
 
 (defn on-channel? [server uid cname]
-  (not (nil? (some #{cname} (user-cnames (user-by-uid server uid))))))
+  (boolean (some #{cname} (user-cnames (user-by-uid server uid)))))
 
 (defn add-to-channel-and-notify [server uid cname]
   (let [user (user-by-uid server uid)
