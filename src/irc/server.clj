@@ -31,10 +31,9 @@
   (get-in server [:users uid]))
 
 (defn user-by-nick [server nick]
-  (let [user (filter #(= (user-nick %) nick) (vals (:users server)))]
-    (if (zero? (count user))
-      nil
-      (first user))))
+  (first (for [[_ user] (:users server)
+               :when (= (user-nick user) nick)]
+           user)))
 
 (defn channel-names [server]
   (sequence (keys (:channels server))))
