@@ -81,11 +81,12 @@
 
 (defmethod construct-message :rpl-name-reply
   [server user message]
-  (format-numeric server user :rpl-name-reply
-                  (str "= " (:chan message) " :"
-                       (join " " (map user-nick
-                                      (users-on-channel server
-                                                        (:chan message)))))))
+  (->> (:chan message)
+       (users-on-channel server)
+       (map user-nick)
+       (join " ")
+       (str "= " (:chan message) " :")
+       (format-numeric server user :rpl-name-reply)))
 
 (defmethod construct-message :rpl-end-of-names
   [server user message]
