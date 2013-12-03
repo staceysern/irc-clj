@@ -20,10 +20,8 @@
 
 (defn welcome [server uid]
   (let [user (user-by-uid server uid)]
-    (notify user server {:message :rpl-welcome})
-    (notify user server {:message :rpl-yourhost})
-    (notify user server {:message :rpl-created})
-    (notify user server {:message :rpl-myinfo})))
+    (doseq [message [:rpl-welcome :rpl-yourhost :rpl-created :rpl-myinfo]]
+      (notify user server {:message message}))))
 
 (defn register [server uid]
   (let [server' (update-user server uid user-set-registered? true)]
