@@ -1,10 +1,10 @@
 (ns irc.send
   (:import [irc.user.User]
            [irc.channel.Channel])
-  (:require [irc.channel :refer :all]
+  (:require [irc.channel :as channel]
             [irc.core :refer :all]
-            [irc.server :refer :all]
-            [irc.user :refer :all]
+            [irc.server :as server :refer [users-on-channel user-by-uid]]
+            [irc.user :as user]
             [clojure.core.async :as async :refer [>!! <!!]]
             [clojure.string :refer [join]]))
 
@@ -40,10 +40,10 @@
    :user  "USER"})
 
 (defn nick-string [user]
-  (or (user-nick user) "*"))
+  (or (user/nick user) "*"))
 
 (defn format-numeric [server user message message-text]
-  (str ":" (server-host server) " " (message numeric) " " (nick-string user) " "
+  (str ":" (server/host server) " " (message numeric) " " (nick-string user) " "
        message-text))
 
 (defn format-command-response [server source message message-text]
@@ -56,23 +56,23 @@
 (defmethod construct-message :rpl-welcome
   [server user message]
   (format-numeric server user :rpl-welcome
-                  (str ":Welcome to the IRC Chat Server " (user-nick user))))
+                  (str ":Welcome to the IRC Chat Server " (user/nick user))))
 
 (defmethod construct-message :rpl-yourhost
   [server user message]
   (format-numeric server user :rpl-yourhost
-                  (str ":Your host is " (server-host server) ", running version "
-                       (server-version server))))
+                  (str ":Your host is " (server/host server) ", running version "
+                       (server/version server))))
 
 (defmethod construct-message :rpl-created
   [server user message]
   (format-numeric server user :rpl-created
-                  (str ":This server was created " (server-create-date server))))
+                  (str ":This server was created " (server/create-date server))))
 
 (defmethod construct-message :rpl-myinfo
   [server user message]
   (format-numeric server user :rpl-myinfo
-                  (str (server-host server) " " (server-version server))))
+                  (str (server/host server) " " (server/version server))))
 
 (defmethod construct-message :rpl-no-topic
   [server user message]
@@ -83,7 +83,7 @@
   [server user message]
   (->> (:chan message)
        (users-on-channel server)
-       (map user-nick)
+       (map user/nick)
        (join " ")
        (str "= " (:chan message) " :")
        (format-numeric server user :rpl-name-reply)))
@@ -197,8 +197,8 @@
 
 (defn send-message [server user message]
   (let [string (construct-message server user message)]
-    (log (format " %2d tx: %s" (user-uid user) string))
-    (async/put! (user-io user) string)
+    (log (format " %2d tx: %s" (user/uid user) string))
+    (async/put! (user/io user) string)
     string))
 
 (defprotocol IMessage
@@ -214,9 +214,9 @@
   irc.channel.Channel
   (notify [channel server message]
     (doseq [uid (if (not= (:message message) :privmsg)
-                  (channel-uids channel)
-                  (filter #(not= (user-nick (user-by-uid server %))
+                  (channel/uids channel)
+                  (filter #(not= (user/nick (user-by-uid server %))
                                  (:source message))
-                          (channel-uids channel)))]
+                          (channel/uids channel)))]
       (notify (user-by-uid server uid) server message))
     server))

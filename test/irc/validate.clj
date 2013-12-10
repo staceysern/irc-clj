@@ -3,7 +3,7 @@
   (:require [midje.sweet :refer :all]
             [irc.io :refer :all]
             [irc.server :refer :all]
-            [irc.user :refer :all]
+            [irc.user :as user]
             [clojure.core.async :as async]))
 
 (defn drain! [chan]
@@ -23,21 +23,21 @@
   (and
    (every? (fn [[user messages]]
              (every? (fn [message]
-                       (let [io (user-io user)
+                       (let [io (user/io user)
                              io-message (async/alt!! (:out-chan io) ([msg] msg)
                                                      :default ::failed)]
                          (when (not= io-message message)
-                           (println "uid:" (user-uid user) "expected: " message
+                           (println "uid:" (user/uid user) "expected: " message
                                     "actual: " io-message))
                          (= io-message message)))
                      messages))
            messages)
    (every? (fn [user]
-             (let [io (user-io user)
+             (let [io (user/io user)
                    io-message (async/alt!! (:out-chan io) ([msg] msg)
                                            :default ::failed)]
                (when (not= io-message ::failed)
-                 (println "uid:" (user-uid user) "expected: no message"
+                 (println "uid:" (user/uid user) "expected: no message"
                           "actual: " io-message))
                (= io-message ::failed)))
            (keys messages))))

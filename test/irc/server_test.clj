@@ -2,13 +2,13 @@
   (:require [midje.sweet :refer :all]
             [irc.server :refer :all]
             [irc.io :refer :all]
-            [irc.channel :refer :all]
-            [irc.user :refer :all]
+            [irc.channel :refer [->Channel]]
+            [irc.user :as user :refer [->User]]
             [clojure.core.async :as async]))
 
-(def host "localhost")
-(def version "irc-sds.0.1")
-(def create-date "Thu Oct 24 2013 at 7:23:58 EST")
+(def host-str "localhost")
+(def version-str "irc-sds.0.1")
+(def create-date-str "Thu Oct 24 2013 at 7:23:58 EST")
 
 (def io1 (->IOPair (async/chan 5) (async/chan 5)))
 (def io2 (->IOPair (async/chan 5) (async/chan 5)))
@@ -46,9 +46,9 @@
 (def user7-registered (->User uid7 io7 true "user7" "User 7" #{}))
 
 (def server
-  {:host host
-   :version version
-   :create-date create-date
+  {:host host-str
+   :version version-str
+   :create-date create-date-str
    :users {uid1 user1 uid2 user2 uid3 user3 uid4 user4
            uid5 user5 uid6 user6}
    :channels {"#chan1" chan1 "#chan2" chan2 "#chan3" chan3
@@ -59,9 +59,9 @@
 (def chan4-minus-user3 (->Channel "#chan4" #{uid1 uid2 uid4}))
 
 (def server-minus-user3
-  {:host host
-   :version version
-   :create-date create-date
+  {:host host-str
+   :version version-str
+   :create-date create-date-str
    :users {uid1 user1 uid2 user2 uid4 user4
            uid5 user5 uid6 user6}
    :channels {"#chan1" chan1 "#chan2" chan2
@@ -70,9 +70,9 @@
               "#chan5" chan5}})
 
 (def server-minus-user3-on-chan3
-  {:host host
-   :version version
-   :create-date create-date
+  {:host host-str
+   :version version-str
+   :create-date create-date-str
    :users {uid1 user1 uid2 user2
            uid3 user3-minus-chan3
            uid4 user4 uid5 user5 uid6 user6}
@@ -81,70 +81,70 @@
               "#chan4" chan4 "#chan5" chan5}})
 
 (def server-plus-user7
-  {:host host
-   :version version
-   :create-date create-date
+  {:host host-str
+   :version version-str
+   :create-date create-date-str
    :users {uid1 user1 uid2 user2 uid3 user3 uid4 user4
            uid5 user5 uid6 user6 uid7 user7}
    :channels {"#chan1" chan1 "#chan2" chan2 "#chan3" chan3
               "#chan4" chan4 "#chan5" chan5}})
 
 (def server-minus-chan5
-  {:host host
-   :version version
-   :create-date create-date
+  {:host host-str
+   :version version-str
+   :create-date create-date-str
    :users {uid1 user1 uid2 user2 uid3 user3 uid4 user4
            uid5 user5 uid6 user6}
    :channels {"#chan1" chan1 "#chan2" chan2 "#chan3" chan3
               "#chan4" chan4}})
 
 (def server-user7
-  {:host host
-   :version version
-   :create-date create-date
+  {:host host-str
+   :version version-str
+   :create-date create-date-str
    :users {uid7 user7}
    :channels {}})
 
 (def server-user7-nick
-  {:host host
-   :version version
-   :create-date create-date
+  {:host host-str
+   :version version-str
+   :create-date create-date-str
    :users {uid7 user7-nick}
    :channels {}})
 
 (def server-user7-realname
-  {:host host
-   :version version
-   :create-date create-date
+  {:host host-str
+   :version version-str
+   :create-date create-date-str
    :users {uid7 user7-realname}
    :channels {}})
 
 (def server-user7-registered
-  {:host host
-   :version version
-   :create-date create-date
+  {:host host-str
+   :version version-str
+   :create-date create-date-str
    :users {uid7 user7-registered}
    :channels {}})
 
-(facts "server-host"
-  (server-host server) => host
+(facts "host"
+  (host server) => host-str
   )
 
-(facts "server-version"
-  (server-version server) => version
+(facts "version"
+  (version server) => version-str
   )
 
-(facts "server-create-date"
-  (server-create-date server) => create-date
+(facts "create-date"
+  (create-date server) => create-date-str
   )
 
 (facts "uids"
-  (uids (make-server)) => ()
+  (uids (->server)) => ()
   (uids server) => (list uid1 uid2 uid3 uid4 uid5 uid6)
   )
 
 (facts "users"
-  (users (make-server)) => ()
+  (users (->server)) => ()
   (users server) => (list user1 user2 user3 user4 user5 user6)
   )
 
@@ -159,12 +159,12 @@
   )
 
 (facts "channel-names"
-  (channel-names (make-server)) => ()
+  (channel-names (->server)) => ()
   (channel-names server) => '("#chan1" "#chan2" "#chan3" "#chan4" "#chan5")
   )
 
 (facts "channels"
-  (channels (make-server)) => ()
+  (channels (->server)) => ()
   (channels server) => (list chan1 chan2 chan3 chan4 chan5)
   )
 
@@ -220,11 +220,11 @@
   )
 
 (facts "update-user"
-  (update-user server-user7 uid7 user-set-nick "user7") => server-user7-nick
+  (update-user server-user7 uid7 user/set-nick "user7") => server-user7-nick
 
-  (update-user server-user7-nick uid7 user-set-realname "User 7")
+  (update-user server-user7-nick uid7 user/set-realname "User 7")
   => server-user7-realname
 
-  (update-user server-user7-realname uid7 user-set-registered? true)
+  (update-user server-user7-realname uid7 user/set-registered? true)
   => server-user7-registered
   )

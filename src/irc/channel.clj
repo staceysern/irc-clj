@@ -2,24 +2,24 @@
 
 (defrecord Channel [cname uids])
 
-(defn make-channel [cname]
+(defn ->channel [cname]
   (->Channel cname #{}))
 
 (defn channel? [channel]
   (instance? Channel channel))
 
-(defn channel-cname [channel]
+(defn cname [channel]
   (:cname channel))
 
-(defn channel-uids [channel]
+(defn uids [channel]
   (:uids channel))
 
-(defn channel-add-user [channel uid]
+(defn add-user [channel uid]
   (update-in channel [:uids] conj uid))
 
-(defn channel-remove-user [channel uid]
+(defn remove-user [channel uid]
   (update-in channel [:uids] disj uid))
 
 (defn print-channel [channel]
-  (println "channel: " (channel-cname channel))
-  (println "   uids: " (channel-uids channel)))
+  (println "channel: " (cname channel))
+  (println "   uids: " (uids channel)))

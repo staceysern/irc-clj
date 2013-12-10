@@ -1,10 +1,10 @@
 (ns irc.server
-  (:require [irc.channel :refer :all]
+  (:require [irc.channel :as channel]
             [irc.core :refer :all]
-            [irc.user :refer :all]
+            [irc.user :as user]
             [clojure.set :refer [difference union]]))
 
-(defn make-server []
+(defn ->server []
   {:host (.getHostName (java.net.InetAddress/getLocalHost))
    :version "irc.sds.0.1"
    :create-date "Wed Nov 20 2013 at 15:19:23 EST"
@@ -12,13 +12,13 @@
    :channels {}       ;; map channel name to channels
    })
 
-(defn server-host [server]
+(defn host [server]
   (:host server))
 
-(defn server-version [server]
+(defn version [server]
   (:version server))
 
-(defn server-create-date [server]
+(defn create-date [server]
   (:create-date server))
 
 (defn uids [server]
@@ -32,7 +32,7 @@
 
 (defn user-by-nick [server nick]
   (first (for [[_ user] (:users server)
-               :when (= (user-nick user) nick)]
+               :when (= (user/nick user) nick)]
            user)))
 
 (defn channel-names [server]
@@ -45,7 +45,7 @@
   (get-in server [:channels cname]))
 
 (defn uids-on-channel [server cname]
-  (sequence (channel-uids (channel-by-name server cname))))
+  (sequence (channel/uids (channel-by-name server cname))))
 
 (defn users-on-channel [server cname]
   (map #(user-by-uid server %)
@@ -53,10 +53,10 @@
 
 (defn channels-for-user [server uid]
   (map #(channel-by-name server %)
-       (user-cnames (user-by-uid server uid))))
+       (user/cnames (user-by-uid server uid))))
 
 (defn uids-on-channels-with [server uid]
-  (sequence (disj (reduce union (map (comp set channel-uids)
+  (sequence (disj (reduce union (map (comp set channel/uids)
                                      (channels-for-user server uid)))
                   uid)))
 
@@ -69,25 +69,25 @@
 (defn add-user-to-channel [server uid cname]
   (-> server
       (assoc-in [:channels cname]
-                (channel-add-user (channel-by-name server cname) uid))
+                (channel/add-user (channel-by-name server cname) uid))
       (assoc-in [:users uid]
-                (user-add-channel (user-by-uid server uid) cname))))
+                (user/add-channel (user-by-uid server uid) cname))))
 
 (defn remove-user-from-channel [server uid cname]
   (-> server
       (assoc-in [:channels cname]
-                (channel-remove-user (channel-by-name server cname) uid))
+                (channel/remove-user (channel-by-name server cname) uid))
       (assoc-in [:users uid]
-                (user-remove-channel (user-by-uid server uid) cname))))
+                (user/remove-channel (user-by-uid server uid) cname))))
 
 (defn remove-user [server uid]
   (update-in (reduce #(remove-user-from-channel %1 uid %2)
                      server
-                     (user-cnames (user-by-uid server uid)))
+                     (user/cnames (user-by-uid server uid)))
              [:users] dissoc uid))
 
 (defn remove-channel [server cname]
-  (if-not (zero? (count (channel-uids (channel-by-name server cname))))
+  (if-not (zero? (count (channel/uids (channel-by-name server cname))))
     (throw (IllegalStateException. "Can't remove a channel with users on it."))
     (update-in server [:channels] dissoc cname)))
 
@@ -96,6 +96,6 @@
 
 (defn print-server [server]
   (doseq [u (users server)]
-    (print-user u))
+    (user/print-user u))
   (doseq [c (channels server)]
-    (print-channel c)))
+    (channel/print-channel c)))

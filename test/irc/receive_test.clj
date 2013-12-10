@@ -2,8 +2,8 @@
   (:require [midje.sweet :refer :all]
             [irc.receive :refer :all]
             [irc.io :refer :all]
-            [irc.user :refer :all]
-            [irc.channel :refer :all]
+            [irc.user :as user :refer [->User]]
+            [irc.channel :as channel :refer [->Channel]]
             [irc.validate :refer :all]
             [clojure.core.async :as async]))
 
@@ -98,7 +98,7 @@
   (drain-ios! [io1 io2 io3 io4]))
 
 (defn welcome-messages [user]
-  (let [nick (user-nick user)]
+  (let [nick (user/nick user)]
     {user [(str ":localhost 001 " nick
                 " :Welcome to the IRC Chat Server " nick)
            (str ":localhost 002 " nick " :Your host is localhost, "

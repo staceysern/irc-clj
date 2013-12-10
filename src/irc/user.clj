@@ -2,45 +2,45 @@
 
 (defrecord User [uid io registered? nick realname cnames])
 
-(defn make-user [uid io]
+(defn ->user [uid io]
   (->User uid io false nil nil #{}))
 
-(defn user-uid [user]
+(defn uid [user]
   (:uid user))
 
-(defn user-io [user]
+(defn io [user]
   (:io user))
 
-(defn user-registered? [user]
+(defn registered? [user]
   (:registered? user))
 
-(defn user-nick [user]
+(defn nick [user]
   (:nick user))
 
-(defn user-realname [user]
+(defn realname [user]
   (:realname user))
 
-(defn user-cnames [user]
+(defn cnames [user]
   (:cnames user))
 
-(defn user-set-registered? [user registered?]
+(defn set-registered? [user registered?]
   (assoc-in user [:registered?] registered?))
 
-(defn user-set-nick [user nick]
+(defn set-nick [user nick]
   (assoc-in user [:nick] nick))
 
-(defn user-set-realname [user realname]
+(defn set-realname [user realname]
   (assoc-in user [:realname] realname))
 
-(defn user-add-channel [user cname]
+(defn add-channel [user cname]
   (update-in user [:cnames] conj cname))
 
-(defn user-remove-channel [user cname]
+(defn remove-channel [user cname]
   (update-in user [:cnames] disj cname))
 
 (defn print-user [user]
-  (println "uid: " (user-uid user)
-           " nick: " (user-nick user)
-           " realname: " (user-realname user))
-  (println "  registered?: " (user-registered? user))
-  (println "  cnames: " (user-cnames user)))
+  (println "uid: " (uid user)
+           " nick: " (nick user)
+           " realname: " (realname user))
+  (println "  registered?: " (registered? user))
+  (println "  cnames: " (cnames user)))

@@ -2,8 +2,8 @@
   (:require [midje.sweet :refer :all]
             [irc.send :refer :all]
             [irc.io :refer :all]
-            [irc.channel :refer :all]
-            [irc.user :refer :all]
+            [irc.channel :refer [->Channel]]
+            [irc.user :refer [->User]]
             [irc.validate :refer :all]
             [clojure.core.async :as async]))
 

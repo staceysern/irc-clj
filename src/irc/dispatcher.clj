@@ -3,7 +3,7 @@
             [irc.parser :refer :all]
             [irc.receive :refer :all]
             [irc.server :refer :all]
-            [irc.user :refer :all]
+            [irc.user :refer [->user]]
             [clojure.core.async :as async :refer [go <!]]
             [clojure.core.match :refer [match]]))
 
@@ -16,7 +16,7 @@
   Return: the message channel"
   [msg-chan]
   (go
-   (loop [server (make-server)]
+   (loop [server (->server)]
      (try
        (match (<! msg-chan)
          nil
@@ -26,7 +26,7 @@
          [:add uid io]
          ;; When a new connection is made, add a user to the server
          (do (log "Add " uid)
-             (recur (add-user server (make-user uid io))))
+             (recur (add-user server (->user uid io))))
 
          [:remove uid]
          ;; When a connection is lost, remove the user from
