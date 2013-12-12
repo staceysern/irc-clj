@@ -1,6 +1,6 @@
 (ns irc.parser-test
   (:require [midje.sweet :refer :all]
-            [irc.parser :refer :all]
+            [irc.parser :refer [gen-parse-list gen-parse-map make-command parse]]
             [instaparse.core :as insta]))
 
 (facts "message"

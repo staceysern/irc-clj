@@ -1,7 +1,7 @@
 (ns irc.server-test
   (:require [midje.sweet :refer :all]
-            [irc.server :refer :all]
-            [irc.io :refer :all]
+            [irc.server :as server]
+            [irc.io :refer [->IOPair]]
             [irc.channel :refer [->Channel]]
             [irc.user :as user :refer [->User]]
             [clojure.core.async :as async]))
@@ -127,104 +127,109 @@
    :channels {}})
 
 (facts "host"
-  (host server) => host-str
+  (server/host server) => host-str
   )
 
 (facts "version"
-  (version server) => version-str
+  (server/version server) => version-str
   )
 
 (facts "create-date"
-  (create-date server) => create-date-str
+  (server/create-date server) => create-date-str
   )
 
 (facts "uids"
-  (uids (->server)) => ()
-  (uids server) => (list uid1 uid2 uid3 uid4 uid5 uid6)
+  (server/uids (server/->server)) => ()
+  (server/uids server) => (list uid1 uid2 uid3 uid4 uid5 uid6)
   )
 
 (facts "users"
-  (users (->server)) => ()
-  (users server) => (list user1 user2 user3 user4 user5 user6)
+  (server/users (server/->server)) => ()
+  (server/users server) => (list user1 user2 user3 user4 user5 user6)
   )
 
 (facts "user-by-uid"
-  (user-by-uid server uid1) => user1
-  (user-by-uid server 99) => nil
+  (server/user-by-uid server uid1) => user1
+  (server/user-by-uid server 99) => nil
   )
 
 (facts "user-by-nick"
-  (user-by-nick server "user1") => user1
-  (user-by-nick server "user99") => nil
+  (server/user-by-nick server "user1") => user1
+  (server/user-by-nick server "user99") => nil
   )
 
 (facts "channel-names"
-  (channel-names (->server)) => ()
-  (channel-names server) => '("#chan1" "#chan2" "#chan3" "#chan4" "#chan5")
+  (server/channel-names (server/->server)) => ()
+
+  (server/channel-names server)
+  => '("#chan1" "#chan2" "#chan3" "#chan4" "#chan5")
   )
 
 (facts "channels"
-  (channels (->server)) => ()
-  (channels server) => (list chan1 chan2 chan3 chan4 chan5)
+  (server/channels (server/->server)) => ()
+  (server/channels server) => (list chan1 chan2 chan3 chan4 chan5)
   )
 
 (facts "channel-by-name"
-  (channel-by-name server "#chan2") => chan2
-  (channel-by-name server "#chan99") => nil
+  (server/channel-by-name server "#chan2") => chan2
+  (server/channel-by-name server "#chan99") => nil
   )
 
 (facts "uids-on-channel"
-  (uids-on-channel server "#chan3") => (list uid1 uid2 uid3)
-  (uids-on-channel server "#chan5") => ()
+  (server/uids-on-channel server "#chan3") => (list uid1 uid2 uid3)
+  (server/uids-on-channel server "#chan5") => ()
   )
 
 (facts "users-on-channel"
-  (users-on-channel server "#chan3") => (list user1 user2 user3)
-  (users-on-channel server "#chan5") => ()
+  (server/users-on-channel server "#chan3") => (list user1 user2 user3)
+  (server/users-on-channel server "#chan5") => ()
   )
 
 (facts "channels-for-user"
-  (channels-for-user server uid2) => (list chan2 chan3 chan4)
-  (channels-for-user server uid5) => ()
+  (server/channels-for-user server uid2) => (list chan2 chan3 chan4)
+  (server/channels-for-user server uid5) => ()
   )
 
 (facts "uids-on-channels-with"
-  (uids-on-channels-with server uid1) => (list uid2 uid3 uid4 uid6)
-  (uids-on-channels-with server uid4) => (list uid1 uid2 uid3)
-  (uids-on-channels-with server uid6) => (list uid1)
-  (uids-on-channels-with server uid5) => ()
+  (server/uids-on-channels-with server uid1) => (list uid2 uid3 uid4 uid6)
+  (server/uids-on-channels-with server uid4) => (list uid1 uid2 uid3)
+  (server/uids-on-channels-with server uid6) => (list uid1)
+  (server/uids-on-channels-with server uid5) => ()
   )
 
 (facts "add-user"
-  (add-user server user7) => server-plus-user7
+  (server/add-user server user7) => server-plus-user7
   )
 
 (facts "remove-user"
-  (remove-user server uid3) => server-minus-user3
+  (server/remove-user server uid3) => server-minus-user3
   )
 
 (facts "add-channel"
-  (add-channel server-minus-chan5 chan5) => server
+  (server/add-channel server-minus-chan5 chan5) => server
   )
 
 (facts "remove-channel"
-  (remove-channel server "#chan5") => server-minus-chan5
+  (server/remove-channel server "#chan5") => server-minus-chan5
   )
 
 (facts "add-user-to-channel"
-  (add-user-to-channel server-minus-user3-on-chan3 uid3 "#chan3") => server
+  (server/add-user-to-channel server-minus-user3-on-chan3 uid3 "#chan3")
+  => server
   )
 
 (facts "remove-user-from-channel"
-  (remove-user-from-channel server uid3 "#chan3") => server-minus-user3-on-chan3
+  (server/remove-user-from-channel server uid3 "#chan3")
+  => server-minus-user3-on-chan3
   )
 
 (facts "update-user"
-  (update-user server-user7 uid7 user/set-nick "user7") => server-user7-nick
+  (server/update-user server-user7 uid7 user/set-nick "user7")
+  => server-user7-nick
 
-  (update-user server-user7-nick uid7 user/set-realname "User 7")
+  (server/update-user server-user7-nick uid7 user/set-realname "User 7")
   => server-user7-realname
 
-  (update-user server-user7-realname uid7 user/set-registered? true)
+  (server/update-user server-user7-realname uid7 user/set-registered? true)
   => server-user7-registered
   )

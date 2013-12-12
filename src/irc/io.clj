@@ -1,6 +1,6 @@
 (ns irc.io
-  (:require [irc.core :refer :all]
-            [clojure.core.async :as async :refer [go >! <!]]
+  (:require [irc.core :refer [log]]
+            [clojure.core.async :as async :refer [go]]
             [clojure.core.match :refer [match]]
             [clojure.core.async.impl.protocols]))
 

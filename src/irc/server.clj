@@ -1,6 +1,6 @@
 (ns irc.server
   (:require [irc.channel :as channel]
-            [irc.core :refer :all]
+            [irc.core :refer [log]]
             [irc.user :as user]
             [clojure.set :refer [difference union]]))
 

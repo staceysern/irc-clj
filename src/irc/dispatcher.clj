@@ -1,8 +1,8 @@
 (ns irc.dispatcher
-  (:require [irc.core :refer :all]
-            [irc.parser :refer :all]
-            [irc.receive :refer :all]
-            [irc.server :refer :all]
+  (:require [irc.core :refer [log]]
+            [irc.parser :refer [parse]]
+            [irc.receive :refer [process-command]]
+            [irc.server :refer [->server add-user remove-user]]
             [irc.user :refer [->user]]
             [clojure.core.async :as async :refer [go <!]]
             [clojure.core.match :refer [match]]))

@@ -2,10 +2,10 @@
   (:import [irc.user.User]
            [irc.channel.Channel])
   (:require [irc.channel :as channel]
-            [irc.core :refer :all]
+            [irc.core :refer [log]]
             [irc.server :as server :refer [users-on-channel user-by-uid]]
             [irc.user :as user]
-            [clojure.core.async :as async :refer [>!! <!!]]
+            [clojure.core.async :as async]
             [clojure.string :refer [join]]))
 
 (def numeric

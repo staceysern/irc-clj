@@ -1,8 +1,6 @@
 (ns irc.validate
   (:use clojure.pprint)
   (:require [midje.sweet :refer :all]
-            [irc.io :refer :all]
-            [irc.server :refer :all]
             [irc.user :as user]
             [clojure.core.async :as async]))
 

@@ -1,15 +1,15 @@
 (ns irc.channel-test
   (:require [midje.sweet :refer :all]
-            [irc.channel :as channel :refer [channel? ->channel]]
-            [irc.user :refer [->user]]))
+            [irc.channel :as channel]
+            [irc.user :as user]))
 
-(def default-channel (->channel "#chan1"))
+(def default-channel (channel/->channel "#chan1"))
 (def chan-one-uid (channel/add-user default-channel 99))
 (def chan-two-uids (channel/add-user chan-one-uid 98))
 
 (facts "channel?"
-  (channel? (->channel "#chan")) => true
-  (channel? (->user 99 nil)) => false
+  (channel/channel? (channel/->channel "#chan")) => true
+  (channel/channel? (user/->user 99 nil)) => false
   )
 
 (facts "cname"
