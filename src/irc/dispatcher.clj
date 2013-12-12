@@ -16,30 +16,30 @@
   Return: the message channel"
   [msg-chan]
   (go
-   (loop [server (->server)]
-     (try
-       (match (<! msg-chan)
-         nil
-         ;; When the message channel is closed, exit the process
-         (log "Exiting server")
+    (loop [server (->server)]
+      (try
+        (match (<! msg-chan)
+          nil
+          ;; When the message channel is closed, exit the process
+          (log "Exiting server")
 
-         [:add uid io]
-         ;; When a new connection is made, add a user to the server
-         (do (log "Add " uid)
-             (recur (add-user server (->user uid io))))
+          [:add uid io]
+          ;; When a new connection is made, add a user to the server
+          (do (log "Add " uid)
+              (recur (add-user server (->user uid io))))
 
-         [:remove uid]
-         ;; When a connection is lost, remove the user from
-         ;; the server
-         (do (log "Remove " uid)
-             (recur (remove-user server uid)))
+          [:remove uid]
+          ;; When a connection is lost, remove the user from
+          ;; the server
+          (do (log "Remove " uid)
+              (recur (remove-user server uid)))
 
-         [:message uid message]
-         ;; When an IRC message string is received from a user, process it
-         (do (log (format "%2d rx: %s" uid message))
-             (recur (process-command server uid (parse message))))
+          [:message uid message]
+          ;; When an IRC message string is received from a user, process it
+          (do (log (format "%2d rx: %s" uid message))
+              (recur (process-command server uid (parse message))))
 
-         :else (throw (java.lang.Exception.
-                       "No match found. (create-server-process!)")))
-       (catch Exception e (println "Server exception:" e))))
-   msg-chan))
+          :else (throw (java.lang.Exception.
+                        "No match found. (create-server-process!)")))
+        (catch Exception e (println "Server exception:" e))))
+    msg-chan))
