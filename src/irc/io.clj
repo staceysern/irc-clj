@@ -39,37 +39,36 @@
       (loop [next-uid 1
              ins-to-uids {}]
         (try
-          (do
-            (match (alts! (conj (keys ins-to-uids) ctrl-chan))
-              [nil ctrl-chan]
-              ;; When the control channel is closed, close the channel
-              ;; to the server and exit the process
-              (do
-                (async/close! dispatch-chan)
-                (log "Exiting io process"))
+          (match (alts! (conj (keys ins-to-uids) ctrl-chan))
+            [nil ctrl-chan]
+            ;; When the control channel is closed, close the channel
+            ;; to the server and exit the process
+            (do
+              (async/close! dispatch-chan)
+              (log "Exiting io process"))
 
-              [[in-chan out-chan] ctrl-chan]
-              ;; Notify the server of a new user and its incoming and
-              ;; outgoing channels
-              (do
-                (let [pair (->IOPair in-chan out-chan)]
-                  (>! dispatch-chan [:add next-uid pair])
-                  (recur (inc next-uid) (assoc ins-to-uids in-chan next-uid))))
+            [[in-chan out-chan] ctrl-chan]
+            ;; Notify the server of a new user and its incoming and
+            ;; outgoing channels
+            (do
+              (let [pair (->IOPair in-chan out-chan)]
+                (>! dispatch-chan [:add next-uid pair])
+                (recur (inc next-uid) (assoc ins-to-uids in-chan next-uid))))
 
-              [nil in-chan]
-              ;; When a incoming channel is closed, notify the server
-              (do
-                (>! dispatch-chan [:remove (ins-to-uids in-chan)])
-                (recur next-uid (dissoc ins-to-uids in-chan)))
+            [nil in-chan]
+            ;; When a incoming channel is closed, notify the server
+            (do
+              (>! dispatch-chan [:remove (ins-to-uids in-chan)])
+              (recur next-uid (dissoc ins-to-uids in-chan)))
 
-              [msg in-chan]
-              ;; Pass along a message that comes in from a user to the server
-              (do
+            [msg in-chan]
+            ;; Pass along a message that comes in from a user to the server
+            (do
 
-                (>! dispatch-chan [:message (ins-to-uids in-chan) msg])
-                (recur next-uid ins-to-uids))
+              (>! dispatch-chan [:message (ins-to-uids in-chan) msg])
+              (recur next-uid ins-to-uids))
 
-              :else (throw (java.lang.Exception.
-                            "No match found. (create-io-process!)"))))
+            :else (throw (java.lang.Exception.
+                          "No match found. (create-io-process!)")))
           (catch Exception e (println "IO Process Exception:" e)))))
     ctrl-chan))
