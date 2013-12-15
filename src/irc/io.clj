@@ -37,9 +37,9 @@
   (let [ctrl-chan (async/chan)]
     (go
       (loop [next-uid 1
-             ins-to-uids {}]
+             ins->uids {}]
         (try
-          (match (alts! (conj (keys ins-to-uids) ctrl-chan))
+          (match (alts! (conj (keys ins->uids) ctrl-chan))
             [nil ctrl-chan]
             ;; When the control channel is closed, close the channel
             ;; to the server and exit the process
@@ -53,20 +53,20 @@
             (do
               (let [pair (->IOPair in-chan out-chan)]
                 (>! dispatch-chan [:add next-uid pair])
-                (recur (inc next-uid) (assoc ins-to-uids in-chan next-uid))))
+                (recur (inc next-uid) (assoc ins->uids in-chan next-uid))))
 
             [nil in-chan]
             ;; When a incoming channel is closed, notify the server
             (do
-              (>! dispatch-chan [:remove (ins-to-uids in-chan)])
-              (recur next-uid (dissoc ins-to-uids in-chan)))
+              (>! dispatch-chan [:remove (ins->uids in-chan)])
+              (recur next-uid (dissoc ins->uids in-chan)))
 
             [msg in-chan]
             ;; Pass along a message that comes in from a user to the server
             (do
 
-              (>! dispatch-chan [:message (ins-to-uids in-chan) msg])
-              (recur next-uid ins-to-uids))
+              (>! dispatch-chan [:message (ins->uids in-chan) msg])
+              (recur next-uid ins->uids))
 
             :else (throw (java.lang.Exception.
                           "No match found. (create-io-process!)")))
