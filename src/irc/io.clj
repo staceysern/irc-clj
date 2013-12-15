@@ -46,7 +46,7 @@
               ;; to the server and exit the process
               (do
                 (async/close! dispatch-chan)
-                (log "Exiting dispatcher"))
+                (log "Exiting io process"))
 
               [[in-chan out-chan] ctrl-chan]
               ;; Notify the server of a new user and its incoming and
@@ -70,6 +70,6 @@
                 (recur next-uid ins-to-uids))
 
               :else (throw (java.lang.Exception.
-                            "No match found. (create-dispatcher-process!)"))))
+                            "No match found. (create-io-process!)"))))
           (catch Exception e (println "IO Process Exception:" e)))))
     ctrl-chan))

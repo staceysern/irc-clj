@@ -7,7 +7,7 @@
             [clojure.core.async :as async :refer [go <!]]
             [clojure.core.match :refer [match]]))
 
-(defn create-dispatcher-process!
+(defn create-server-process!
   "Create an asynchronous process that monitors a channel which
   receives messages from users and dispatches the messages to be
   handled
@@ -21,7 +21,7 @@
         (match (<! msg-chan)
           nil
           ;; When the message channel is closed, exit the process
-          (log "Exiting server")
+          (log "Exiting server process")
 
           [:add uid io]
           ;; When a new connection is made, add a user to the server
