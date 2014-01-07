@@ -131,8 +131,8 @@
     (doseq [c non-initial]
       (receive/valid-nick? (str c "a")) => false))
 
-  (receive/valid-nick? (clojure.string/join (repeat 8 "A"))) => true
-  (receive/valid-nick? (clojure.string/join (repeat 9 "A"))) => false
+  (receive/valid-nick? (clojure.string/join (repeat 16 "A"))) => true
+  (receive/valid-nick? (clojure.string/join (repeat 17 "A"))) => false
   )
 
 (facts "valid-chan?"

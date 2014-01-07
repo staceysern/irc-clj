@@ -4,10 +4,10 @@
             [irc.server.server :as server]
             [irc.server.user :as user]))
 
-(def max-nick-len 8)
+(def max-nick-len 16)
 
 (defn valid-nick? [nick]
-  (boolean (re-matches #"[a-zA-z\[\]\\\`_^{|}][a-zA-Z0-9\[\]\\\`_^{|}-]{0,7}"
+  (boolean (re-matches #"[a-zA-z\[\]\\\`_^{|}][a-zA-Z0-9\[\]\\\`_^{|}-]{0,15}"
                        nick)))
 
 (defn valid-chan? [channel-name]
