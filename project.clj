@@ -1,4 +1,4 @@
-(defproject irc "0.1.0-SNAPSHOT"
+(defproject irc "0.1.0"
   :description "IRC Server"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
@@ -10,4 +10,5 @@
                  [instaparse "1.2.7"]]
   :main irc.system
   :aliases {"launch" ["trampoline" "run" "irc"]}
-  :profiles {:dev {:plugins [[lein-midje "3.1.1"]]}})
+  :profiles {:dev {:plugins [[lein-midje "3.1.1"]]}}
+  :create-date "Tue Jan 7 2014")

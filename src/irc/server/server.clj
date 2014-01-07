@@ -5,12 +5,18 @@
             [clojure.set :refer [union]]))
 
 (defn ->server []
-  {:host (.getHostName (java.net.InetAddress/getLocalHost))
-   :version "irc.sds.0.1"
-   :create-date "Wed Nov 20 2013 at 15:19:23 EST"
-   :users {}          ;; map uid to users
-   :channels {}       ;; map channel name to channels
-   })
+  (let [project (->> "project.clj"
+                     slurp
+                     read-string
+                     (drop 2)
+                     (cons :version)
+                     (apply hash-map))]
+    {:host (.getHostName (java.net.InetAddress/getLocalHost))
+     :version (str "irc.sds." (:version project))
+     :create-date (:create-date project)
+     :users {}          ;; map uid to users
+     :channels {}       ;; map channel name to channels
+     }))
 
 (defn host [server]
   (:host server))
