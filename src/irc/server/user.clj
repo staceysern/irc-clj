@@ -1,4 +1,4 @@
-(ns irc.user)
+(ns irc.server.user)
 
 (defrecord User [uid io registered? nick realname cnames])
 

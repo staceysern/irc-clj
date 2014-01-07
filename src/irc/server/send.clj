@@ -1,10 +1,11 @@
-(ns irc.send
-  (:import [irc.user.User]
-           [irc.channel.Channel])
-  (:require [irc.channel :as channel]
-            [irc.core :refer [log]]
-            [irc.server :as server :refer [users-on-channel user-by-uid]]
-            [irc.user :as user]
+(ns irc.server.send
+  (:import [irc.server.user.User]
+           [irc.server.channel.Channel])
+  (:require [irc.core :refer [log]]
+            [irc.iopair :refer [out-chan]]
+            [irc.server.channel :as channel]
+            [irc.server.server :as server :refer [users-on-channel user-by-uid]]
+            [irc.server.user :as user]
             [clojure.core.async :as async]
             [clojure.string :refer [join]]))
 
@@ -48,6 +49,9 @@
 
 (defn format-command-response [server source message message-text]
   (str ":" source " " (message command) " " message-text))
+
+(defn format-error [server text]
+  (str "ERROR " text))
 
 (defmulti construct-message
   (fn  [server user message]
@@ -122,7 +126,7 @@
 (defmethod construct-message :err-unknown-command
   [server user message]
   (format-numeric server user :err-unknown-command
-                  (str (:command message) " :Unknown command")))
+                  (str (name (:command message)) " :Unknown command")))
 
 (defmethod construct-message :err-no-nickname-given
   [server user message]
@@ -195,9 +199,13 @@
                            :quit
                            (str ":" (:text message))))
 
+(defmethod construct-message :error
+  [server user message]
+  (format-error server (:text message)))
+
 (defn send-message [server user message]
   (let [string (construct-message server user message)]
-    (log (format " %2d tx: %s" (user/uid user) string))
+    (log (format "%5d tx: %s" (user/uid user) string))
     (async/put! (user/io user) string)
     string))
 
@@ -205,13 +213,13 @@
   (notify [messageable server message]))
 
 (extend-protocol IMessage
-  irc.user.User
+  irc.server.user.User
   (notify [user server message]
     (send-message server user message)
     server))
 
 (extend-protocol IMessage
-  irc.channel.Channel
+  irc.server.channel.Channel
   (notify [channel server message]
     (doseq [uid (if (not= (:message message) :privmsg)
                   (channel/uids channel)
@@ -220,3 +228,6 @@
                           (channel/uids channel)))]
       (notify (user-by-uid server uid) server message))
     server))
+
+(defn disconnect [server user]
+  (async/close! (out-chan (user/io user))))

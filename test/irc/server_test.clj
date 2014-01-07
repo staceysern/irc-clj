@@ -1,9 +1,9 @@
 (ns irc.server-test
   (:require [midje.sweet :refer :all]
-            [irc.server :as server]
-            [irc.io :refer [->IOPair]]
-            [irc.channel :refer [->Channel]]
-            [irc.user :as user :refer [->User]]
+            [irc.iopair :refer [->IOPair]]
+            [irc.server.channel :refer [->Channel]]
+            [irc.server.server :as server]
+            [irc.server.user :as user :refer [->User]]
             [clojure.core.async :as async]))
 
 (def host-str "localhost")

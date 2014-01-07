@@ -1,4 +1,4 @@
-(ns irc.channel)
+(ns irc.server.channel)
 
 (defrecord Channel [cname uids])
 

@@ -1,7 +1,7 @@
 (ns irc.channel-test
   (:require [midje.sweet :refer :all]
-            [irc.channel :as channel]
-            [irc.user :as user]))
+            [irc.server.channel :as channel]
+            [irc.server.user :as user]))
 
 (def default-channel (channel/->channel "#chan1"))
 (def chan-one-uid (channel/add-user default-channel 99))

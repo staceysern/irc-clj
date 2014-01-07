@@ -1,8 +1,8 @@
-(ns irc.server
-  (:require [irc.channel :as channel]
-            [irc.core :refer [log]]
-            [irc.user :as user]
-            [clojure.set :refer [difference union]]))
+(ns irc.server.server
+  (:require [irc.core :refer [log]]
+            [irc.server.channel :as channel]
+            [irc.server.user :as user]
+            [clojure.set :refer [union]]))
 
 (defn ->server []
   {:host (.getHostName (java.net.InetAddress/getLocalHost))
@@ -81,10 +81,12 @@
                 (user/remove-channel (user-by-uid server uid) cname))))
 
 (defn remove-user [server uid]
-  (update-in (reduce #(remove-user-from-channel %1 uid %2)
-                     server
-                     (user/cnames (user-by-uid server uid)))
-             [:users] dissoc uid))
+  (let [channels (user/cnames (user-by-uid server uid))
+        server' (if (empty? channels)
+                  server
+                  (reduce #(remove-user-from-channel %1 uid %2) server
+                          channels))]
+    (update-in server' [:users] dissoc uid)))
 
 (defn remove-channel [server cname]
   (if-not (zero? (count (channel/uids (channel-by-name server cname))))

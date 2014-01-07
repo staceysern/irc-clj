@@ -1,6 +1,6 @@
 (ns irc.user-test
   (:require [midje.sweet :refer :all]
-            [irc.user :as user]))
+            [irc.server.user :as user]))
 
 (def default-user (user/->user 99 "IO"))
 (def user-one-chan (assoc-in default-user [:cnames] #{"#chan1"}))

@@ -1,9 +1,9 @@
 (ns irc.receive-test
   (:require [midje.sweet :refer :all]
-            [irc.receive :as receive]
-            [irc.io :refer [->IOPair]]
-            [irc.user :as user :refer [->User]]
-            [irc.channel :as channel :refer [->Channel]]
+            [irc.iopair :refer [->IOPair]]
+            [irc.server.channel :as channel :refer [->Channel]]
+            [irc.server.receive :as receive]
+            [irc.server.user :as user :refer [->User]]
             [irc.validate :refer [validate-state drain-ios! no-messages]]
             [clojure.core.async :as async]))
 
@@ -69,6 +69,13 @@
                   :channels {"#chan1" chan1-part "#chan2" chan2-part
                              "#chan3" chan3-part "#chan4" chan4}})
 
+(def server-disconnect {:host "localhost"
+                        :version "irc-sds.0.1"
+                        :create-date "Thu Oct 24 2013 at 7:23:58 EST"
+                        :users {uid2 user2 uid3 user3 uid4 user4}
+                        :channels {"#chan1" chan1-part "#chan2" chan2-part
+                                   "#chan3" chan3-part "#chan4" chan4}})
+
 (def server-quit {:host "localhost"
                   :version "irc-sds.0.1"
                   :create-date "Thu Oct 24 2013 at 7:23:58 EST"
@@ -80,22 +87,22 @@
 (def uid 99)
 
 (def user (->User uid io true "user9999" "User 9999" #{}))
-(def usr-none (->User uid io false nil nil #{}))
-(def usr-nick (->User uid io false "user9999" nil #{}))
-(def usr-realname (->User uid io false nil "User 9999" #{}))
-(def usr-both (->User uid io false "user9999" "User 9999" #{}))
-(def usr-registered (->User uid io true "user9999" "User 9999" #{}))
-(def usr-changed (->User uid io true "user0000" "User 9999" #{}))
+(def user-none (->User uid io false nil nil #{}))
+(def user-nick (->User uid io false "user9999" nil #{}))
+(def user-realname (->User uid io false nil "User 9999" #{}))
+(def user-both (->User uid io false "user9999" "User 9999" #{}))
+(def user-registered (->User uid io true "user9999" "User 9999" #{}))
+(def user-changed (->User uid io true "user0000" "User 9999" #{}))
 
-(def server-none (assoc-in server [:users uid] usr-none))
-(def server-nick (assoc-in server [:users uid] usr-nick))
-(def server-realname (assoc-in server [:users uid] usr-realname))
-(def server-both (assoc-in server [:users uid] usr-both))
-(def server-registered (assoc-in server [:users uid] usr-registered))
-(def server-changed (assoc-in server [:users uid] usr-changed))
+(def server-none (assoc-in server [:users uid] user-none))
+(def server-nick (assoc-in server [:users uid] user-nick))
+(def server-realname (assoc-in server [:users uid] user-realname))
+(def server-both (assoc-in server [:users uid] user-both))
+(def server-registered (assoc-in server [:users uid] user-registered))
+(def server-changed (assoc-in server [:users uid] user-changed))
 
 (defn drain-all! []
-  (drain-ios! [io1 io2 io3 io4]))
+  (drain-ios! [io io1 io2 io3 io4]))
 
 (defn welcome-messages [user]
   (let [nick (user/nick user)]
@@ -542,7 +549,7 @@
                            {:command :part :chan "#chan5"})
   => (validate-state server-chan5
                      (merge {user1 [":user1 PART #chan5"]}
-                            (no-messages [user3 user4])))
+                            (no-messages [user2 user3 user4])))
 
   ;; non-existent channel
   (drain-all!)
@@ -613,13 +620,43 @@
                             (no-messages [user2 user3 user4])))
   )
 
-(facts ":process-command quit"
-  ;; quit
+(facts "process-command :disconnect"
+  ;; user not registered
   (drain-all!)
-  (receive/process-command server uid1
-                           {:command :quit :source "user1" :text "Client Quit"})
-  => (validate-state server-quit  {user1 [":user1 QUIT :Client Quit"]
-                                   user2 [":user1 QUIT :Client Quit"]
-                                   user3 [":user1 QUIT :Client Quit"]
-                                   user4 []})
+  (receive/process-command server-none uid {:command :disconnect})
+  => (validate-state server (no-messages [user1 user2 user3 user4]))
+
+  ;; existing channel
+  (drain-all!)
+  (receive/process-command server uid1 {:command :disconnect})
+  => (validate-state server-disconnect
+                     {user2 [(str ":user1 QUIT "
+                                  ":Remote host closed connection")]
+                      user3 [(str ":user1 QUIT "
+                                  ":Remote host closed connection")]
+                      user4 []})
+  )
+
+;; The tests for quit must be last because they causes channels to be closed
+(facts ":process-command quit"
+  ;; user not registered
+  (drain-all!)
+  (receive/process-command server-none uid {:command :quit})
+  => (validate-state server
+                     (merge {user-none [(str "ERROR :Closing Link: "
+                                        "127.0.0.1 (Client Quit)")]}
+                            (no-messages [user1 user2 user3 user4]))
+                     [user-none])
+
+  ;; user registered
+  (drain-all!)
+  (receive/process-command server uid1 {:command :quit})
+  => (validate-state server-quit
+                     {user1 [":user1 QUIT :Client Quit"
+                             (str "ERROR :Closing Link: "
+                                  "localhost (Client Quit)")]
+                      user2 [":user1 QUIT :Client Quit"]
+                      user3 [":user1 QUIT :Client Quit"]
+                      user4 []}
+                     [user1])
   )

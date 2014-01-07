@@ -1,9 +1,9 @@
 (ns irc.send-test
   (:require [midje.sweet :refer :all]
-            [irc.send :as send]
-            [irc.io :refer [->IOPair]]
-            [irc.channel :refer [->Channel]]
-            [irc.user :refer [->User]]
+            [irc.iopair :refer [->IOPair]]
+            [irc.server.channel :refer [->Channel]]
+            [irc.server.send :as send]
+            [irc.server.user :refer [->User]]
             [irc.validate :refer [validate-state drain-ios! no-messages]]
             [clojure.core.async :as async]))
 
@@ -191,6 +191,12 @@
   (send/construct-message server user1
                           {:message :quit :source "user3" :text "Client Quit"})
   => ":user3 QUIT :Client Quit"
+  )
+
+(facts "construct-message :error"
+  (send/construct-message server user1
+                          {:message :error :text ":Closing Link:"})
+  => "ERROR :Closing Link:"
   )
 
 (facts "notify"

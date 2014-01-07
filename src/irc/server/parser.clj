@@ -1,4 +1,4 @@
-(ns irc.parser
+(ns irc.server.parser
   (:require [instaparse.core :as insta]
             [clojure.core.match :refer [match]]
             [clojure.string :refer [lower-case]]))

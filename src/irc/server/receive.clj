@@ -1,9 +1,8 @@
-(ns irc.receive
-  (:require [irc.channel :refer [->channel channel?]]
-            [irc.send :refer [notify]]
-            [irc.server :as server]
-            [irc.user :as user]
-            [clojure.set :refer [difference union]]))
+(ns irc.server.receive
+  (:require [irc.server.channel :refer [->channel channel?]]
+            [irc.server.send :refer [notify disconnect]]
+            [irc.server.server :as server]
+            [irc.server.user :as user]))
 
 (def max-nick-len 8)
 
@@ -180,12 +179,8 @@
   (let [user (server/user-by-uid server uid)
         error (when-not (user/registered? user)
                 {:message :err-not-registered})]
-    (cond error
-          (notify user server error)
-
-          (= (:chan command) "0")
-          (leave-channels server uid)
-
+    (cond error (notify user server error)
+          (= (:chan command) "0") (leave-channels server uid)
           :else (join-channel server uid (:chan command)))))
 
 (defmethod process-command :part
@@ -226,12 +221,32 @@
 
 (defmethod process-command :quit
   [server uid command]
-  (doseq [u (conj (server/uids-on-channels-with server uid) uid)]
-    (notify (server/user-by-uid server u) server
-            {:message :quit
-             :source (user/nick (server/user-by-uid server uid))
-             :text "Client Quit"}))
-  (server/remove-user server uid))
+  (let [user (server/user-by-uid server uid)]
+    (when (user/registered? user)
+      (doseq [u (conj (server/uids-on-channels-with server uid) uid)]
+        (notify (server/user-by-uid server u) server
+                {:message :quit
+                 :source (user/nick (server/user-by-uid server uid))
+                 :text "Client Quit"})))
+    (let [source (if (user/registered? user)
+                   (server/host server)
+                   "127.0.0.1")]
+      (notify user server
+              {:message :error
+               :text (str ":Closing Link: " source " (Client Quit)")}))
+    (disconnect server user)
+    (server/remove-user server uid)))
+
+(defmethod process-command :disconnect
+  [server uid command]
+  (let [user (server/user-by-uid server uid)]
+    (when (user/registered? user)
+      (doseq [u (server/uids-on-channels-with server uid)]
+        (notify (server/user-by-uid server u) server
+                {:message :quit
+                 :source (user/nick (server/user-by-uid server uid))
+                 :text "Remote host closed connection"})))
+    (server/remove-user server uid)))
 
 (defmethod process-command :default
   [server uid command]
