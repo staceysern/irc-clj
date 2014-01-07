@@ -137,6 +137,7 @@
   (parse ":prefix quit") => {:command :quit}
   (parse "quit") => {:command :quit}
   (parse ":prefix") => {:command :invalid :invalid :unknown-command}
+  (parse "nonsense") => {:command :nonsense :invalid :unknown-command}
   )
 
 (facts "make-command"
@@ -283,4 +284,9 @@
 
   (make-command {:command :ison :params ["nickname"]})
   => {:command :ison :nick "nickname"}
+  )
+
+(facts "make-command nonsense"
+  (make-command {:command :nonsense :params []})
+  => {:command :nonsense :invalid :unknown-command}
   )

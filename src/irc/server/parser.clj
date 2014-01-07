@@ -62,16 +62,15 @@
           (assoc result :command :foo)))
 
   Note the implicit :else clause."
-  [command & clauses]
-  `(defmethod make-command ~command
-     [{params# :params}]
+  [dispatch & clauses]
+  `(defmethod make-command ~dispatch
+     [{params# :params command# :command}]
      (let [result# (match params#
                      ~@clauses
                      :else {})]
-       (assoc result# :command ~command))))
-
-(defcommand :invalid
-  _ {:invalid :unknown-command})
+       (if (= ~dispatch :default)
+         (assoc result# :command command#)
+         (assoc result# :command ~dispatch)))))
 
 (defcommand :pass
   [password & _] {:password password})
@@ -117,6 +116,12 @@
 (defcommand :ison
   [nick & _] {:nick nick}
   [] {:invalid :need-more-params})
+
+(defcommand :invalid
+  _ {:invalid :unknown-command})
+
+(defcommand :default
+  _ {:invalid :unknown-command})
 
 (defn parse [s]
   (make-command (gen-parse-map (gen-parse-list s))))

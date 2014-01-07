@@ -257,10 +257,26 @@
   )
 
 (facts "process-command :unknown-command"
+  ;; invalid message format
   (drain-all!)
   (receive/process-command server uid1
                            {:invalid :unknown-command :command :invalid})
   => (validate-state server (no-messages [user1 user2 user3 user4]))
+
+  ;; invalid command before registration
+  (drain-all!)
+  (receive/process-command server-none uid
+                           {:invalid :unknown-command :command :noncommand})
+  => (validate-state server-none (no-messages [user1 user2 user3 user4]))
+
+  ;; invalid command after registration
+  (drain-all!)
+  (receive/process-command server-registered uid
+                           {:invalid :unknown-command :command :noncommand})
+  => (validate-state server-registered
+                     (merge {user [(str ":localhost 421 user9999 "
+                                        "noncommand :Unknown command")]}
+                            (no-messages [user1 user2 user3 user4])))
   )
 
 (facts "process-command :no-recipient"

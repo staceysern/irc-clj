@@ -133,7 +133,13 @@
 
 (defmethod process-command :unknown-command
   [server uid command]
-  server)
+  (let [user (server/user-by-uid server uid)
+        response (when (and (not= (:command command) :invalid)
+                            (user/registered? user))
+                   {:message :err-unknown-command :command (:command command)})]
+    (if response
+      (notify user server response)
+      server)))
 
 (defmethod process-command :pass
   [server uid command]
