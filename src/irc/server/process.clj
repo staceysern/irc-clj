@@ -8,6 +8,14 @@
             [clojure.core.async :refer [go]]
             [clojure.core.match :refer [match]]))
 
+;; The server process receives messages for users from the incoming
+;; process and sends messages to the outgoing process.  Communication
+;; between the server process and the other processes for a user takes place
+;; through an IOPair which contains an incoming and an outgoing core.async
+;; channel.  The server process monitors the server control channel for
+;; for notifications of new users and then monitors their incoming channels
+;; for messages.
+
 (defn start-server-process!
   [ctrl-chan]
   (go

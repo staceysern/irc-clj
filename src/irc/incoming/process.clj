@@ -9,6 +9,28 @@
             [clojure.core.async :as async :refer [put!]]
             [clojure.set :refer [difference]]))
 
+;; The incoming process is a select loop over a set of sockets.
+;; Initially that set consists of a listener socket which is
+;; registered to provide notification of connection requests.  When
+;; a connection request is accepted, the resulting socket is
+;; registered to provide notification of incoming bytes and a new
+;; entry is made into the connections hash map which maps the socket
+;; to a hash map used for buffering incoming bytes.
+
+;; The connections entry for a socket consists of a buffer into which
+;; bytes are read from the socket, start and scan indices which are used
+;; in scanning the incoming bytes for delimiters to determine the bounds
+;; of a complete message, and a discard? flag which indicates that
+;; bytes received until the next delimiter should be discarded.
+
+;; When a complete message is received from a socket, the incoming
+;; process passes it to the server process through the incoming
+;; channel of the io-pair associated with the socket.  When the
+;; incoming process detects that a client has disconnected, it removes
+;; the entry for the socket in the socket->io-pair mapping in the
+;; !io-map.  Then it closes the socket and notifies the server process
+;; and the outgoing process.
+
 (def channel-size 100)
 
 (def max-message-length 510)
@@ -50,6 +72,9 @@
   (update-in state [:connections] dissoc connection))
 
 (defn accept-and-register! [state key]
+  "Accept a new connection and register it to provide notifications of
+   received bytes.  Return a list of the new state and the new connection, or
+   nil if an error occurs."
   (try
     (let [connection (-> key (.channel) (.accept))
           state' (add-connection state connection)]
@@ -60,11 +85,13 @@
     (catch Exception e nil)))
 
 (defn accept-connection! [state key]
+  "Accept a connection request, create an io-pair for the socket, add the
+   mapping between the socket and io-pair to the !io-map, and notify the
+   outgoing process and the server process of the new user."
   (if-let [[state' connection] (accept-and-register! state key)]
     (let [in-chan (async/chan channel-size)
           out-chan (async/chan channel-size)
           pair (->IOPair in-chan out-chan)]
-
       (add-io! (:!io-map state') connection pair)
       (put! (:outgoing-chan state') [:add pair])
       (put! (:server-chan state') pair)
@@ -72,6 +99,8 @@
     state))
 
 (defn remove-connection-after-outgoing! [state sockets]
+  "Complete the process of removing a connection that was begun by the
+   outgoing process."
   (if (empty? sockets)
     state
     (do
@@ -79,11 +108,12 @@
       (recur (remove-connection state (first sockets)) (rest sockets)))))
 
 (defn remove-connection-before-outgoing! [state key]
+  "Start the process of removing a connection and notify the outgoing and the
+   server processes."
   (let [connection (.channel key)
         io-pair (socket->io-pair (:!io-map state) connection)]
     (.cancel key)
     (remove-socket->io-pair! (:!io-map state) connection)
-
     (when (io-pair->socket (:!io-map state) io-pair)
       (try
         (.close connection)
@@ -93,6 +123,7 @@
     (remove-connection state connection)))
 
 (defn compact! [state connection]
+  "Move the remaining bytes in the buffer for a socket to the beginning."
   (let [position (.position (buffer state connection))]
     (.compact (buffer state connection))
     (-> state
@@ -100,6 +131,7 @@
         (set-scan connection (- (scan state connection) position)))))
 
 (defn discard! [state connection]
+  "Discard the contents of the buffer for a socket."
   (.clear (buffer state connection))
   (.flip  (buffer state connection))
   (-> state
@@ -108,8 +140,8 @@
       (set-discard? connection true)))
 
 (defn get-message! [state connection]
-  "Return a list consisting of the next message and the new server state
-   received on the socket.  If a full carriage return/line feed delimited
+  "Return a list consisting of the next message received on a socket and
+   the new server state.  If a full carriage return/line feed delimited
    message is not available, return nil for the next message."
   (let [buf (buffer state connection)]
     (loop [state state
@@ -178,18 +210,27 @@
               :else (recur state (inc x)))))))
 
 (defn read-connection! [state key]
-  ;; Returns true if socket has been successfully read
-  ;; false otherwise
+  "Read from a socket into its buffer.  Return true if the read is successful
+   and false otherwise."
   (let [connection (.channel key)]
     (try
       (> (.read connection (buffer state connection)) 0)
       (catch java.io.IOException e false))))
 
 (defn take-connection! [state key]
+  "Read from a socket and pass each complete message received to the server.
+   A failure on the read indicates that the client has disconnected.  In that
+   case, start the process of removing recources associated with that client.
+   Otherwise, repeatedly look for the next complete message in the buffer and
+   pass it to the server process through the incoming channel of the io-pair
+   associated with the socket.  When no more complete messages are left in
+   the buffer, move any remaining bytes to the beginning of the buffer to
+   leave adequate space for the rest of the message."
   (if-not (read-connection! state key)
     (remove-connection-before-outgoing! state key)
     (let [connection (.channel key)]
       (.flip (buffer state connection))
+      ;; Repeatedly look for the next complete message in the buffer.
       (loop [state state]
         (let [[message state'] (get-message! state connection)]
           (if (nil? message)
@@ -202,6 +243,17 @@
 (declare service-keys)
 
 (defn select [state selector]
+  "Wait until one of a set of sockets is ready to be read or accepted but
+   timeout after five seconds.  The timeout is designed to allow a cleanup of
+   resources for sockets which were disconnected at the behest of the
+   outgoing process even when there is no other system activity.  When a
+   socket is disconnected by the outgoing process, that process removes the
+   socket's entry in the io-pairs->sockets map.  Each time the select
+   unblocks, compare the numbers of entries in the io-pairs->sockets map to
+   the number in the sockets->io-pairs map.  When they differ, determine which
+   sockets have been disconnected and remove the incoming process's data
+   for those sockets.  Otherwise, service the set of sockets which are ready."
+  ;; seconds has passed.
   (.select selector 5000)
   (let [!io-map @(:!io-map state)]
     (if (= (count (:sockets->io-pairs !io-map))
@@ -213,6 +265,8 @@
         (recur (remove-connection-after-outgoing! state sockets) selector)))))
 
 (defn service-keys [state selector iter]
+  "Iterate through a set of ready keys accepting connections or handling
+   incoming bytes."
   (if (.hasNext iter)
     (let [key (.next iter)
           state' (try

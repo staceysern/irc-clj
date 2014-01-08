@@ -1,5 +1,8 @@
 (ns irc.io)
 
+;; The !io-map provides a mapping between sockets and io-pairs.  It is
+;; an atom that is shared between the incoming and outgoing processes.
+
 (defn ->!io-map []
   (atom
    {:sockets->io-pairs {}
